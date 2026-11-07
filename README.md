@@ -1,30 +1,35 @@
-# Touchline Studio — Live Browser Editor
+# Touchline Studio — Classic football analysis
 
-This is the **public, no-install** Touchline Studio preview. The page itself is public, but the footage you open stays in the browser on your computer and is **not uploaded to GitHub**.
+**Your editor:** https://nickirwin352-gif.github.io/touchline-studio-preview./
 
-## Current editor
-- Open local MP4/WebM recordings directly in the browser, plus a practice pitch for quick testing.
-- Create fixed coloured rings below players, spotlights, tactical arrows, boxes, lines, circles, freehand strokes and labels.
-- Change colour, size, timing, fade and **pop** transitions.
-- Add **smooth camera zooms** at any position, with adjustable scale/duration, and freeze holds.
-- Tag, preview and organise clip ranges. Use full playback and manual frame stepping.
-- Export clips with tactical overlays, zooms and freeze holds using the **browser's MediaRecorder**. Output is **MP4 on browsers that support it, otherwise WebM**. Audio is included when browser video/audio capture supports it. Exports run at roughly playback speed and are limited to 3 minutes to prevent excessive memory use. Local video files are required; cross-origin browser restrictions prevent remote video rendering.
-- Save lightweight projects in local browser storage, with JSON backup and restore. Match video files are not included in backups.
+This project is the original-style Touchline Studio football editor, with coloured player rings, arrows, timed telestration, freeze frames, camera zooms, clips, playlists and video export. The source repository and GitHub Pages website are public; private match footage and credentials should never be committed to GitHub.
 
-## Veo workflow
-1. Click **Veo / video link**.
-2. Paste the official Veo recording link and save it to the project.
-3. Use **Open Veo** to watch the match from its original source.
-4. If your Veo account has download permission, open the Veo recording and choose **Download full game**. Attach that MP4 with **Attach match video**.
-5. Analyse the local file, apply zooms/drawings/freeze frames, save clips and export your annotated videos.
+## One-click deploy: Veo streaming and MP4 export
 
-**What this does not do:** an ordinary Veo sharing link cannot automatically grant a separate static GitHub Pages site access to stream or download the underlying match. Sharing links are view-only. There is no exposed Veo credential, scraping code, secret, unauthorised download proxy, or hidden API in this static editor. Real one-click authenticated import would require Veo's authorised integration support and a secure backend. See Veo's official [sharing](https://support.veo.com/hc/en-us/articles/4451490513169-How-to-share-Veo-recordings-on-social-media-or-via-link) and [downloading](https://support.veo.com/hc/en-us/articles/4451733961361-How-to-download-your-Veo-recordings) guidance.
+The GitHub Pages version can edit local footage, but cannot run a Veo streaming server. For **paste a publicly shared Veo link → play inside the editor**, deploy the included video backend on Render.
 
-## Publishing
-The **Publish Touchline Studio** GitHub Actions workflow runs syntax checks and browser logic tests, then publishes the static editor to GitHub Pages whenever files change on `main`. After a successful deployment, reload the same website URL to see updates.
+[**Deploy the full Touchline Studio to Render**](https://render.com/deploy?repo=https%3A%2F%2Fgithub.com%2Fnickirwin352-gif%2Ftouchline-studio-preview..git)
 
-## Privacy and browser notes
-- The **website and source code are public**, so never commit match files, personal information, logins or API secrets to this repository.
-- Project annotations and clip metadata are stored in the local browser, and are not synchronised to other devices. Clearing browser data can delete them; **download JSON backups**.
-- Chrome/Edge may remember permission for a chosen match file; in other browsers, use **Reconnect video** after refreshing.
-- Export depends on browser-native MediaRecorder, HTML canvas and permitted media codecs. Some browsers only support WebM; others support MP4. Long and high-resolution videos may export more slowly. The desktop edition continues to exist as a separate, private project.
+The included [`render.yaml`](render.yaml) configures:
+- Docker, Node.js, yt-dlp and FFmpeg automatically on the host; **nothing to install on your laptop**
+- Starter web server and a 10 GB persistent disk (about **US$9.50/month** together at Render's current listed prices, plus possible bandwidth usage)
+- Automatic GitHub `main` branch deployments
+- One login with username **`touchline`** and your own secret password
+
+**During deployment:** Review the recurring charges and approve them only if acceptable. Set `TOUCHLINE_ACCESS_PASSWORD` to a unique password of at least 20 characters **inside Render's dashboard**, not in GitHub or chat. Do not share your password with anyone. Keep the disk attached so project data survives restarts.
+
+Once Render shows its live HTTPS URL ending in `.onrender.com`, the full editor should be at that link. Share **only the public service URL** with your assistant to replace the GitHub Pages bookmark's destination with your full editor. Never share the secret password. Veo playback still needs testing against real, authorised public Veo links; deployment alone is not proof of compatibility.
+
+## What public Veo playback does
+
+With the full backend running, Paste Veo link in the editor performs an availability and video seek check before replacing your existing match. On success, the stream plays in the actual Touchline video timeline via small byte-range responses; no full-match download is required. Access-denied and non-seekable recordings show a clear error and preserve your earlier match and annotations. Signed video URLs remain server-side. Some public Veo links may still fail if Veo changes its delivery system or access rules.
+
+[Detailed Veo public streaming design](docs/VEO_PUBLIC_STREAMING_DESIGN.md) · [Classic editor setup and limitations](docs/CLASSIC_EDITOR.md)
+
+## Other ways to use Touchline Studio
+
+- **GitHub Pages Classic:** full original-style workspace for local videos and local browser projects. Veo streaming and server-side MP4 export are unavailable until the full backend is deployed.
+- **Previous lightweight prototype:** https://nickirwin352-gif.github.io/touchline-studio-preview./lite/
+- **Full Render editor:** one secure hosted editor for public Veo playback, match projects, timed drawings and FFmpeg-based MP4 export, after deployment and verification.
+
+The earlier private Windows development repository remains separate and untouched.
