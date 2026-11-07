@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090f18">
+  <title>Touchline Studio — Browser Editor</title>
+  <meta name="description" content="Fast, local-first football video telestration. No downloads or AI models required.">
+  <link rel="stylesheet" href="./styles.css?rev=@@BUILD_SHA@@">
+  <script type="module" src="./app.js?rev=@@BUILD_SHA@@"></script>
+</head>
+<body>
+  <div class="app">
+    <aside class="library">
+      <div class="brand">
+        <div class="brand-icon">↗</div>
+        <div><strong>TOUCHLINE <span>STUDIO</span></strong><small>FOOTBALL ANALYSIS</small></div>
+      </div>
+      <div class="library-head">
+        <span class="micro-heading">YOUR WORKSPACE</span>
+        <button id="new-project" class="square" title="New project" aria-label="New project">＋</button>
+      </div>
+      <div id="projects" class="project-list" aria-label="Saved projects"></div>
+      <div class="library-foot">
+        <span class="live-dot"></span>
+        <div><strong>Browser-first beta</strong><small>Work saved in this browser</small></div>
+      </div>
+      <div class="library-links">
+        <button id="export-project" title="Download a backup of this project">↓ Backup project</button>
+        <button id="import-project" title="Open a saved Touchline browser project">↑ Restore backup</button>
+        <input id="project-json" type="file" accept=".json,application/json" hidden>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <div class="breadcrumbs">WORKSPACE <span> / </span> <b>EDITOR</b> <em>NO AI SETUP</em></div>
+        <div class="topbar-actions">
+          <span id="save-state" class="save-state">Saved on this device</span>
+          <button id="source-link" class="btn btn-muted">⌁ Veo / video link</button>
+          <button id="pick-file" class="btn btn-primary">＋ Add footage</button>
+          <input id="video-file" type="file" accept="video/mp4,video/webm,video/quicktime,video/x-m4v,video/*" hidden>
+        </div>
+      </header>
+      <div class="content">
+        <div class="heading-row">
+          <div class="heading-text">
+            <div class="micro-heading lime">ANALYSIS WORKSPACE <span class="stage-tag">BROWSER EDITION</span></div>
+            <input id="title" type="text" maxlength="100" aria-label="Project name" value="Untitled analysis">
+            <p id="media-note">Practice on the demo pitch or add match footage</p>
+          </div>
+          <div class="top-metrics"><span class="live-dot"></span><span id="media-state">DEMO CANVAS</span><span class="metric-sep"></span><span id="count">0 MARKUPS</span></div>
+        </div>
+        <div id="source-panel" class="source-panel" hidden>
+          <div><strong id="source-title">Veo reference saved</strong><small id="source-desc">You can keep your original link with this project.</small></div>
+          <button id="open-source" class="btn btn-muted">Open Veo ↗</button>
+        </div>
+        <section class="editor">
+          <div class="editor-head">
+            <strong><span class="lime">◉</span> EDITOR CANVAS</strong>
+            <span id="canvas-hint">Select a tool, then click or drag on the video</span>
+          </div>
+          <div id="tools" class="toolbar" role="toolbar" aria-label="Drawing tools">
+            <span class="toolbar-label">DRAW</span>
+            <button data-tool="select" class="tool active" title="Select or move — V">↖ <span>Select</span></button>
+            <button data-tool="ring" class="tool" title="Place a ring under a player — 1">◎ <span>Player ring</span></button>
+            <button data-tool="arrow" class="tool" title="Draw an arrow — A">➜ <span>Arrow</span></button>
+            <button data-tool="line" class="tool" title="Draw a line — L">╱ <span>Line</span></button>
+            <button data-tool="rect" class="tool" title="Draw a box — B">▱ <span>Box</span></button>
+            <button data-tool="ellipse" class="tool" title="Draw a circle — C">◯ <span>Circle</span></button>
+            <button data-tool="pen" class="tool" title="Freehand drawing — P">✎ <span>Pen</span></button>
+            <button data-tool="text" class="tool" title="Add a label — T">T <span>Label</span></button>
+            <button data-tool="spotlight" class="tool" title="Highlight one area — S">◉ <span>Spotlight</span></button>
+            <span class="grow"></span>
+            <div id="palette" class="palette" aria-label="Colours"></div>
+          </div>
+          <div class="stage-wrap">
+            <div id="stage" class="stage">
+              <video id="video" playsinline preload="metadata"></video>
+              <div id="demo-pitch" class="demo-pitch" aria-label="Practice pitch">
+                <div class="pitch-grass"></div><div class="pitch-lines"><div class="pitch-half"></div><div class="pitch-circle"></div><div class="pitch-box left"></div><div class="pitch-box right"></div><div class="pitch-goal left"></div><div class="pitch-goal right"></div><div class="pitch-spot"></div></div>
+                <div class="pitch-text"><strong>YOUR ANALYSIS STARTS HERE</strong><small>Draw on the practice pitch or import a match video</small></div>
+              </div>
+              <svg id="overlay" class="overlay" viewBox="0 0 1000 562.5" preserveAspectRatio="none" aria-label="Tactical annotation layer"></svg>
+              <div id="freeze-label" class="freeze-label" hidden>❚❚ FREEZE FRAME <span id="freeze-left"></span></div>
+              <div id="reconnect-panel" class="reconnect-panel" hidden><strong>Reconnect your match video</strong><small>Your annotations are safe. The browser needs permission to reopen the original file.</small><button id="reconnect" class="btn btn-primary">Reconnect video</button></div>
+            </div>
+          </div>
+          <div class="transport">
+            <div class="transport-buttons">
+              <button id="skip-back" title="Back 5 seconds" aria-label="Back five seconds">↶<sup>5</sup></button>
+              <button id="play" class="play-button" title="Play or pause (Space)" aria-label="Play video">▶</button>
+              <button id="skip-forward" title="Forward 5 seconds" aria-label="Forward five seconds">↷<sup>5</sup></button>
+              <button id="frame-back" title="Back one approximate frame">❮❘</button>
+              <button id="frame-forward" title="Forward one approximate frame">❘❯</button>
+            </div>
+            <div class="clock"><strong id="current-time">00:00</strong><span>/</span><span id="duration">01:30</span></div>
+            <span class="grow"></span>
+            <label class="speed">SPEED <select id="speed"><option value="0.5">0.5×</option><option selected value="1">1×</option><option value="1.5">1.5×</option><option value="2">2×</option></select></label>
+          </div>
+          <div class="timeline">
+            <div class="timeline-head"><strong>TIMELINE</strong><span><i class="key markup"></i> Graphics &nbsp; <i class="key freeze"></i> Freeze &nbsp; <i class="key clip"></i> Clips</span></div>
+            <div class="seek-wrap"><span>0:00</span><div class="seek-area"><input id="seek" type="range" min="0" max="90" step="0.01" value="0" aria-label="Video timeline"><div id="markers" class="markers"></div></div><span id="seek-end">1:30</span></div>
+            <div class="quick-row">
+              <button id="quick-clip" class="btn btn-muted">✂ Save ±5s clip</button>
+              <button id="add-freeze" class="btn btn-muted">❚❚ Freeze at playhead</button>
+              <label class="quick-hold">HOLD <select id="freeze-duration"><option value="1.5">1.5s</option><option selected value="3">3s</option><option value="5">5s</option></select></label>
+              <span class="grow"></span>
+              <button id="undo" class="soft-button" title="Undo (Ctrl+Z)">↶ Undo</button>
+              <button id="redo" class="soft-button" title="Redo (Ctrl+Shift+Z)">↷ Redo</button>
+            </div>
+          </div>
+        </section>
+        <p class="below-note"><span>✓</span> No Python, no model downloads. Rings are placed manually and stay fixed on the pitch. Browser mode saves edits locally; advanced MP4 export and authenticated Veo streaming stay in the desktop edition for now.</p>
+      </div>
+    </main>
+    <aside class="inspector">
+      <div class="inspector-heading"><span>ANALYSIS PANEL</span><b>● LIVE EDIT</b></div>
+      <div class="inspector-tabs"><button id="tab-markups" class="active">Drawings & effects</button><button id="tab-clips">Clips</button></div>
+      <div id="markups-pane">
+        <div class="panel-section">
+          <div class="panel-head"><strong>MARKUP</strong><span id="side-count">0 items</span></div>
+          <p>Select a drawing to customise its colour, timing, fade, line width and label.</p>
+          <div id="markup-list" class="item-list"></div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-head"><strong>SELECTED GRAPHIC</strong></div>
+          <div id="no-selection" class="empty-panel">Select any drawing on the canvas or choose a tool to add one.</div>
+          <div id="properties" hidden>
+            <label class="field-label">LABEL <input id="prop-label" maxlength="120" placeholder="Optional text"></label>
+            <span class="field-label">COLOUR</span><div id="property-palette" class="palette property-palette"></div>
+            <label class="field-label">SIZE / LINE WEIGHT <output id="weight-output">4</output><input id="prop-weight" type="range" min="1" max="12" step="1" value="4"></label>
+            <div class="field-grid"><label class="field-label">START (SEC)<input id="prop-start" type="number" min="0" step=".1"></label><label class="field-label">END (SEC)<input id="prop-end" type="number" min="0" step=".1"></label></div>
+            <label class="field-label">FADE (SEC) <output id="fade-output">0.3</output><input id="prop-fade" type="range" min="0" max="1.5" step=".1" value=".3"></label>
+            <button id="delete-annotation" class="danger-button">Delete graphic</button>
+          </div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-head"><strong>FREEZE FRAMES</strong><span id="freeze-count">0 freezes</span></div>
+          <p>Press freeze at the playhead to pause the action during playback, then resume automatically.</p>
+          <div id="freeze-list" class="item-list"></div>
+        </div>
+      </div>
+      <div id="clips-pane" hidden>
+        <div class="panel-section">
+          <div class="panel-head"><strong>CLIP MAKER</strong></div>
+          <p>Save time ranges as clips without copying or trimming the original video.</p>
+          <div class="field-grid"><label class="field-label">IN (SEC)<input id="clip-in" type="number" min="0" step=".1" value="0"></label><label class="field-label">OUT (SEC)<input id="clip-out" type="number" min="0" step=".1" value="10"></label></div>
+          <div class="clip-actions"><button id="mark-in" class="btn btn-muted">Mark IN</button><button id="mark-out" class="btn btn-muted">Mark OUT</button></div>
+          <label class="field-label">CLIP TITLE<input id="clip-title" maxlength="100" placeholder="e.g. Defensive transition"></label>
+          <button id="save-clip" class="btn btn-primary full">＋ Save clip</button>
+        </div>
+        <div class="panel-section"><div class="panel-head"><strong>SAVED CLIPS</strong><span id="clip-count">0 clips</span></div><div id="clip-list" class="item-list"></div></div>
+        <div class="panel-section"><div class="panel-head"><strong>VIDEO EXPORT</strong></div><p>Professional annotated MP4 rendering remains available in the Windows version while we perfect this lighter editor.</p></div>
+      </div>
+      <div class="inspector-foot">⌁ The original video remains on your computer. Download a project backup if you need to move it to another browser.</div>
+    </aside>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
