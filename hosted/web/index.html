@@ -139,7 +139,7 @@
     <form id="link-form" class="link-card">
       <div class="link-modal-top"><div class="link-icon">↗</div><button id="close-link" type="button" aria-label="Close dialog" class="source-remove">×</button></div>
       <h2 id="link-modal-title">Add a Veo or video link</h2>
-      <p>Paste a publicly accessible Veo match link to start watching without downloading 3–4 GB. yt-dlp is needed to resolve Veo streams.</p>
+      <p>Paste a public Veo match link. We will check whether Veo allows third-party video playback; a link that plays on Veo does not always work in other editors.</p>
       <label class="form-label" for="link-input">VIDEO OR VEO URL</label>
       <input id="link-input" class="field" type="url" required maxlength="2048" placeholder="https://app.veo.co/..." autocomplete="off" spellcheck="false" />
       <div class="link-explainer"><strong>Choose how to open the Veo match:</strong>
@@ -148,6 +148,8 @@
         <small>For publicly accessible footage you have permission to analyse. Private links may fail; playback depends on the host supporting byte-range requests. The highlighted clip in a Veo URL does not trim the match.</small>
       </div>
       <p id="veo-link-status" class="veo-link-status" role="status" aria-live="polite" hidden></p>
+      <button id="open-public-veo" type="button" class="btn btn-outline">Check link on Veo</button>
+      <small class="link-privacy-note">For a proper public-access check, open the same link in a private/incognito window while signed out of Veo.</small>
       <div class="link-modal-buttons"><button id="cancel-link" type="button" class="btn btn-outline">Cancel</button><button id="save-link" type="submit" class="btn btn-primary">Open match</button></div>
     </form>
   </div>

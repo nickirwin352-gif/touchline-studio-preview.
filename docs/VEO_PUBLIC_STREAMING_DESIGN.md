@@ -50,3 +50,13 @@ Official reference: https://support.veo.com/hc/en-us/articles/4451490513169-How-
 5. If tests fail because Veo changes its service or sharing rules, report the limitation instead of silently falling back to unrelated functionality.
 
 **Current status:** code and offline tests are present, but no companion host is connected, and real Veo recordings have not been tested end to end. The public GitHub Pages URL alone is not a working third-party Veo stream.
+
+## Diagnosing Veo HTTP 403 in the free Render edition
+
+The Veo extractor first contacts Veo's public-facing match APIs. If Veo returns HTTP 401/403 during that lookup, the recording **has not even been resolved to a video file**. This might mean the Veo recording is private, Veo's extractor API is restricted, or Veo blocks access from the hosted Render IP address. It does **not**, by itself, prove the recording is private.
+
+If the extractor successfully resolves a video address but the CDN then returns 403, that is a **different** failure stage: the media host refused the Touchline video-byte request. In both cases, signed media URLs must stay server-side; do not expose, embed or store them in project files.
+
+To distinguish user permissions from third-party integration restrictions, copy the *same* Veo recording link into a private/incognito browser window while signed out of Veo. If it will not play there, ask the owner to make that specific recording public or grant authorised viewing access. If it plays in a private browser window but Touchline receives 403, that is likely a restriction affecting the external integration or cloud-server IP, and not a user-password problem. View-only public sharing does not automatically entitle other services to retrieve, store or redistribute the video bytes.
+
+The full-editor link dialog provides a **Check link on Veo** button and retains existing footage/annotations when preflight fails. For recordings the user is permitted to download, they can use Veo's own download feature and import the authorised video file. Otherwise, reliable third-party integration requires Veo-supported API or player permissions, not copied cookies or bypassing Veo access controls.

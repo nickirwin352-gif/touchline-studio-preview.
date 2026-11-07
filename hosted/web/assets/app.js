@@ -1261,6 +1261,23 @@ function openLinkDialog() {
     input.focus();
 }
 function closeLinkDialog() { el('link-modal').hidden = true; }
+
+function openPublicVeo() {
+    const raw = el('link-input').value.trim();
+    try {
+        const link = new URL(raw);
+        if (link.protocol !== 'https:' || link.hostname !== 'app.veo.co' || link.port ||
+            link.username || link.password || !/^\/matches\/[A-Za-z0-9_-]+\/?$/.test(link.pathname)) {
+            throw new Error('Use a public https://app.veo.co/matches/... link.');
+        }
+        window.open(link.toString(), '_blank', 'noopener,noreferrer');
+    }
+    catch {
+        const status = el('veo-link-status');
+        status.hidden = false;
+        status.textContent = 'Paste a valid Veo match link first, then open it in a private browser window while signed out.';
+    }
+}
 function isDirectVideoLink(value) {
     try {
         return /\.(mp4|m4v|mov|webm)$/i.test(new URL(value).pathname);
@@ -1618,6 +1635,7 @@ function registerEvents() {
     for (const id of ['close-link', 'cancel-link'])
         el(id).addEventListener('click', closeLinkDialog);
     el('link-form').addEventListener('submit', (event) => { event.preventDefault(); void saveLink(); });
+    el('open-public-veo').addEventListener('click', openPublicVeo);
     el('open-source').addEventListener('click', () => { if (project?.sourceLink)
         window.open(project.sourceLink, '_blank', 'noopener,noreferrer'); });
     el('remove-source').addEventListener('click', () => { void removeSource(); });

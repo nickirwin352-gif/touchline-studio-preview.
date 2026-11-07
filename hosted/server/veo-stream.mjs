@@ -81,7 +81,7 @@ export async function extractVeoVideoUrl(matchUrl) {
   clearTimeout(timeout);
   if (spawnError?.code === 'ENOENT') throw fail('yt-dlp is not installed. Install it and restart Touchline Studio.', 503);
   if (code !== 0 || spawnError) {
-    if (/HTTP Error\s*(401|403)|Forbidden|Unauthorized/i.test(stderr)) throw fail('Veo denied access to this recording', 403);
+    if (/HTTP Error\s*(401|403)|Forbidden|Unauthorized/i.test(stderr)) throw fail('Veo blocked the server from reading this recording (HTTP 403). The link may be private, or Veo may block third-party access even when the match plays publicly.', 403);
     throw fail('Could not resolve the Veo video. Check the link, permissions and yt-dlp version.');
   }
   const urls = stdout.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
@@ -106,7 +106,7 @@ export async function probeStreamRange(url, options = {}) {
       signal
     }, fetcher, checker);
     if (response.status === 401 || response.status === 403)
-      throw fail('Veo denied access to this recording. Check that the match is public.', 403);
+      throw fail('The video host blocked the Touchline server (HTTP 403). The recording might still be watchable in Veo. Check the link in a private browser window.', 403);
     if (response.status === 404 || response.status === 410)
       throw fail('This Veo recording is no longer available.', 404);
     if (response.status !== 206)
@@ -237,6 +237,7 @@ export async function requestVideoRange(project, req, res, options = {}) {
       clearResolvedStream(project.id);
       url = await resolvedStream(project, extractor);
     }
+    if (upstream.status === 401 || upstream.status === 403) throw fail('The video host blocked streamed playback from Touchline (HTTP 403). Public viewing in Veo does not automatically grant third-party streaming access.', 403);
     if (upstream.status === 416) throw fail('The video server rejected that seek position', 416);
     if (upstream.status !== 206) {
       await upstream.body?.cancel?.();

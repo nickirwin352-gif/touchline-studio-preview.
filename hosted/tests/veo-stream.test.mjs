@@ -107,7 +107,7 @@ test('public video is accepted only after an actual bounded seek probe', async (
   await assert.rejects(probeStreamRange(target,{
     fetcher:async()=>new Response('denied',{status:403}),
     checker:async()=>{}
-  }),/denied access/);
+  }),/video host blocked the Touchline server/i);
   await assert.rejects(probeStreamRange(target,{
     fetcher:async()=>new Response('bad',{status:206,headers:{'Content-Range':'bytes 3-5/100000'}}),
     checker:async()=>{}
