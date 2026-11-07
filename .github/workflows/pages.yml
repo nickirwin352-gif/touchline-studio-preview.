@@ -61,7 +61,7 @@ jobs:
         if: github.event_name != 'pull_request'
         continue-on-error: true
         run: |
-          status=$(curl --location --silent --show-error --max-time 110 --retry 2 --retry-delay 5 --retry-all-errors --output /dev/null --write-out '%{http_code}' 'https://touchline-veo-free.onrender.com/api/health' || true)
+          status=$(curl --location --silent --show-error --connect-timeout 8 --max-time 25 --retry 1 --retry-delay 5 --retry-all-errors --output /dev/null --write-out '%{http_code}' 'https://touchline-veo-free.onrender.com/api/health' || true)
           echo "Render unauthenticated health response: HTTP $status"
           if [ "$status" = "401" ]; then
             echo "Render service is reachable and correctly requests owner authentication."
