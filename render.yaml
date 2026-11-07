@@ -1,0 +1,22 @@
+# Optional full editor companion. GitHub Pages alone cannot proxy Veo video.
+# This Blueprint requires approval of Starter and persistent disk charges.
+services:
+  - type: web
+    name: touchline-studio-classic
+    runtime: docker
+    dockerfilePath: ./hosted/Dockerfile
+    dockerContext: ./hosted
+    plan: starter
+    branch: main
+    autoDeployTrigger: commit
+    disk:
+      name: touchline-classic-data
+      mountPath: /var/data
+      sizeGB: 10
+    envVars:
+      - key: TOUCHLINE_CLOUD_MODE
+        value: "1"
+      - key: TOUCHLINE_DATA_DIR
+        value: /var/data
+      - key: TOUCHLINE_ACCESS_PASSWORD
+        sync: false

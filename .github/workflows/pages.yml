@@ -1,17 +1,18 @@
-name: Publish Touchline Studio
+name: Publish Touchline Studio Classic
 
 on:
   push:
     branches: [main]
     paths:
+      - 'hosted/**'
+      - 'scripts/**'
+      - '.github/workflows/pages.yml'
       - 'index.html'
       - 'app.js'
       - 'director.js'
       - 'recorder.js'
       - 'styles.css'
-      - 'package.json'
       - 'tests/**'
-      - '.github/workflows/pages.yml'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -20,34 +21,46 @@ permissions:
   contents: read
 
 concurrency:
-  group: touchline-public-preview
+  group: touchline-classic-pages
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout source
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Check JavaScript syntax
-        run: node --check app.js
-      - name: Run browser editor tests
+      - name: Test previous browser preview
         run: npm test
-      - name: Assemble static site with cache-busted assets
+      - name: Install FFmpeg for original video exporter tests
         run: |
-          mkdir -p _site
-          cp index.html app.js director.js recorder.js styles.css .nojekyll _site/
-          sed -i "s/@@BUILD_SHA@@/${GITHUB_SHA}/g" _site/index.html
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+      - name: Test classic editor and backend
+        working-directory: hosted
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run build
+      - name: Build classic GitHub Pages edition
+        run: node scripts/build-classic.mjs
+      - name: Validate classic script and bridge
+        run: |
+          node --check _site/classic/assets/app.js
+          node --check _site/classic/bridge.js
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
-      - name: Upload editor artifact
+      - name: Upload static site
         if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
+
   deploy:
     if: github.event_name != 'pull_request'
     needs: build
@@ -59,6 +72,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy browser editor
+      - name: Publish Classic editor
         id: deployment
         uses: actions/deploy-pages@v4

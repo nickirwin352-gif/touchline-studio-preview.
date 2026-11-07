@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0c121b" />
+  <title>Touchline Studio — Football Video Analysis</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><div class="brand-mark"><span>↗</span></div><div><div class="brand-title">TOUCHLINE<span> STUDIO</span></div><div class="brand-subtitle">PERFORMANCE ANALYSIS</div></div></div>
+      <div class="workspace-label"><span>WORKSPACE</span><span class="muted-pill">LOCAL</span></div>
+      <div class="side-nav"><div class="nav-active"><span class="nav-icon">▣</span> Match library <span class="nav-count" id="project-count">0</span></div></div>
+      <div class="library-top"><span>YOUR PROJECTS</span><button id="new-project" class="icon-button" title="New project" aria-label="New project">＋</button></div>
+      <div id="project-list" class="project-list"></div>
+      <div class="sidebar-bottom"><div class="privacy-dot"></div><div><strong>Private workspace</strong><small>Stored on this computer</small></div></div>
+    </aside>
+
+    <div class="main-shell">
+      <header class="topbar">
+        <div class="breadcrumb">MATCH ANALYSIS <span>›</span> <strong>EDITOR</strong></div>
+        <div class="top-actions"><span id="save-status" class="save-state">● Saved locally</span><button id="save-project" class="btn btn-outline">Save project</button><button id="add-link" class="btn btn-outline">🔗 Paste link</button><button id="import-top" class="btn btn-primary"><span>＋</span> Import video</button></div>
+      </header>
+
+      <div class="workspace">
+        <main class="main-content">
+          <div class="project-heading"><div><div class="eyebrow">ANALYSIS WORKSPACE <span class="stage-chip">PLAYER TRACKING · v1.1</span></div><input id="project-title" aria-label="Project title" maxlength="100" placeholder="Untitled analysis" /><div id="video-description" class="project-subtitle">Add match footage to start your analysis</div></div><div class="heading-note"><span class="heading-note-dot"></span> MANUAL ANALYSIS</div></div>
+
+          <div id="source-strip" class="source-strip" hidden>
+            <div class="source-strip-info"><strong id="source-title">Linked match</strong><small id="source-message"></small></div>
+            <button id="open-source" class="btn btn-outline" type="button" hidden>Open in Veo ↗</button>
+            <button id="attach-source" class="btn btn-primary" type="button">Attach video file</button>
+            <button id="remove-source" class="source-remove" type="button" title="Remove linked source" aria-label="Remove linked source">×</button>
+          </div>
+          <section class="studio-panel">
+            <div class="panel-top"><div class="panel-title"><span class="signal-icon">◉</span> VIDEO WORKSPACE</div><div class="panel-meta"><span id="resolution">NO FOOTAGE</span><span class="meta-divider"></span><span id="annotation-count">0 ANNOTATIONS</span></div></div>
+            <div class="drawing-toolbar" id="drawing-toolbar">
+              <div class="toolbar-prefix">DRAW</div>
+              <button data-tool="select" class="tool active" title="Select and move (V)">↖ <span>Select</span></button>
+              <div class="tool-divider"></div>
+              <button data-tool="arrow" class="tool" title="Arrow (A)">➜ <span>Arrow</span></button>
+              <button data-tool="line" class="tool" title="Line (L)">╱ <span>Line</span></button>
+              <button data-tool="rect" class="tool" title="Rectangle (R)">▭ <span>Box</span></button>
+              <button data-tool="ellipse" class="tool" title="Ellipse (C)">◯ <span>Circle</span></button>
+              <button data-tool="pen" class="tool" title="Freehand (P)">✎ <span>Pen</span></button>
+              <button data-tool="text" class="tool" title="Text label (T)">T <span>Text</span></button>
+              <div class="tool-divider"></div>
+              <button data-tool="highlight" class="tool pro-tool" title="Click a player to circle them">◎ <span>Player</span></button>
+              <button data-tool="spotlight" class="tool pro-tool" title="Click a player to spotlight them">◉ <span>Spotlight</span></button>
+              <button data-tool="curve" class="tool pro-tool" title="Drag a curved arrow">↝ <span>Curve</span></button>
+              <button data-tool="zone" class="tool pro-tool" title="Drag to highlight a tactical zone">▧ <span>Zone</span></button>
+              <button id="ai-detect" type="button" class="btn btn-primary" title="Detect people in the paused frame and select a player to track">◎ Detect players (AI)</button>
+              <div class="toolbar-spacer"></div>
+              <div id="color-tools" class="color-tools" aria-label="Annotation colours"></div>
+            </div>
+            <div id="ai-control-strip" class="ai-control-strip"><div><strong>AI PLAYER FOLLOWING</strong><small id="ai-status">Pause footage, choose Detect players, then select a player box. Optional Python model setup required.</small></div><label>Track <select id="ai-seconds" class="field" aria-label="Tracking duration"><option value="6">6 sec</option><option value="10" selected>10 sec</option><option value="15">15 sec</option></select></label><button id="ai-cancel" type="button" class="btn btn-outline" hidden>Cancel</button><button id="ai-clear" type="button" class="btn btn-outline" hidden>Clear boxes</button></div>
+            <div class="video-outer"><div id="video-frame" class="video-frame">
+              <div id="video-visual" class="video-visual"><video id="match-video" preload="metadata" playsinline></video>
+              <svg id="drawing-overlay" class="drawing-overlay" aria-label="Tactical drawing layer"></svg><svg id="ai-detections" class="ai-detections" aria-label="Detected players to select" hidden></svg></div><div id="freeze-indicator" class="freeze-indicator" hidden>❚❚ FREEZE FRAME <small id="freeze-counter"></small></div>
+              <div id="empty-video" class="empty-video"><div class="empty-pitch"><div class="pitch-centre"></div><div class="pitch-box left"></div><div class="pitch-box right"></div><div class="pitch-midline"></div></div><div class="empty-foreground"><div class="empty-icon">▶</div><h2>Your analysis starts here</h2><p>Import match footage to play, annotate and save your tactical insights.</p><button id="import-empty" class="btn btn-primary">＋ &nbsp; Import match footage</button><button id="add-link-empty" class="btn btn-outline empty-link">🔗 Paste Veo or video link</button><small>MP4 · MOV · M4V · WEBM</small></div></div>
+            </div></div>
+            <div class="transport"><div class="playback-buttons"><button id="back-5" class="play-control" title="Back 5 seconds" aria-label="Back 5 seconds">↶<span class="tiny-five">5</span></button><button id="play" class="play-primary" title="Play/pause (Space)" aria-label="Play">▶</button><button id="forward-5" class="play-control" title="Forward 5 seconds" aria-label="Forward 5 seconds">↷<span class="tiny-five">5</span></button><button id="frame-back" class="play-control mini" title="Approximate frame step backward">❮❘</button><button id="frame-next" class="play-control mini" title="Approximate frame step forward">❘❯</button></div><div class="transport-time"><strong id="current-time">00:00:00</strong><span>/</span><span id="total-time">00:00:00</span></div><div class="transport-spacer"></div><label class="speed-label">SPEED <select id="play-speed" aria-label="Playback speed"><option value="0.5">0.5×</option><option value="1" selected>1.0×</option><option value="1.5">1.5×</option><option value="2">2.0×</option></select></label></div>
+            <div class="timeline-wrap"><div class="timeline-top"><span>TIMELINE</span><span id="timeline-hint">● Drawings &nbsp; ◆ Freeze frames &nbsp; ◇ Zooms</span></div><div class="timeline-row"><span id="timeline-start">00:00</span><div class="timeline-container"><input id="seek" type="range" min="0" max="1000" value="0" step="1" aria-label="Video timeline" /><div id="timeline-markers" class="timeline-markers"></div><div id="clip-timeline-markers" class="clip-timeline-markers"></div><div id="effect-timeline-markers" class="effect-timeline-markers"></div></div><span id="timeline-end">00:00</span></div></div>
+            <div class="clip-maker" id="clip-maker">
+              <div class="clip-maker-heading"><strong>✂ &nbsp; CLIP EDITOR</strong><span id="clip-status">Quick clip saves 5s before + 5s after</span></div>
+              <div class="quick-actions"><button id="quick-clip" type="button" class="btn btn-primary" title="Save 5 seconds before and after the playhead (K)">✂ Quick clip ±5s</button><button id="quick-tag" type="button" class="btn btn-outline" title="Tag the chosen football event at this moment (G)">◆ Tag event ±5s</button><span>Tap while watching · no IN/OUT needed</span></div>
+              <div class="clip-trim-grid">
+                <label class="clip-field">IN <div class="clip-time-control"><input id="clip-in" type="text" inputmode="numeric" maxlength="9" value="00:00" placeholder="MM:SS" aria-label="Clip in point in minutes and seconds"/><button type="button" id="mark-in" title="Set clip in at playhead (I)">Mark IN</button></div></label>
+                <label class="clip-field">OUT <div class="clip-time-control"><input id="clip-out" type="text" inputmode="numeric" maxlength="9" value="00:00" placeholder="MM:SS" aria-label="Clip out point in minutes and seconds"/><button type="button" id="mark-out" title="Set clip out at playhead (O)">Mark OUT</button></div></label>
+                <div class="clip-form-actions"><button id="preview-range" type="button" class="btn btn-outline">▶ Preview</button><button id="reset-clip" type="button" class="btn btn-outline">Clear</button></div>
+              </div>
+              <div class="clip-event-picker"><label class="form-label" for="clip-preset">CLIP EVENT / NAME</label><select class="field" id="clip-preset" aria-label="Choose a football event or custom clip name"><option value="">Choose event type (or write your own name)…</option><option value="custom">Custom clip name…</option></select></div>
+              <div class="clip-details-grid"><input id="clip-title" class="field" maxlength="100" placeholder="Clip name — select above or type your own" aria-label="Clip title" />
+                <input id="clip-category" class="field" maxlength="40" list="clip-category-options" value="General" aria-label="Event category" />
+                <datalist id="clip-category-options"><option value="General"></option><option value="Pass"></option><option value="Shot"></option><option value="Goal"></option><option value="Tackle"></option><option value="Pressing"></option><option value="Transition"></option><option value="Turnover"></option><option value="Set piece"></option><option value="Defensive action"></option></datalist>
+                <button type="button" id="save-clip" class="btn btn-primary">＋ Save clip</button>
+              </div>
+              <div class="clip-detail-bottom"><input id="clip-notes" class="field" maxlength="500" placeholder="Optional analysis notes" aria-label="Clip notes"/><span id="clip-editing-status"></span></div>
+            </div>
+            <div class="export-panel" id="export-panel">
+              <div class="clip-maker-heading"><strong>↗ &nbsp; EXPORT VIDEO</strong><span>MP4 · H.264 · AAC</span></div>
+              <div class="export-grid">
+                <label class="export-field">EXPORT CONTENT<select class="field" id="export-target" aria-label="Clip or playlist to export"><option value="">Choose saved clip or playlist…</option></select></label>
+                <label class="export-field">RESOLUTION<select class="field" id="export-quality" aria-label="Export resolution"><option value="720p">720p — faster</option><option value="1080p">1080p — Full HD</option></select></label>
+              </div>
+              <div class="export-bottom"><label class="export-checkbox"><input type="checkbox" id="export-annotations" checked /> Burn tactical annotations into video</label><button type="button" class="btn btn-primary" id="start-export">↗ Export MP4</button></div>
+              <div id="export-progress" class="export-progress" hidden><div id="export-phase">Preparing export…</div><div class="export-progress-track"><div id="export-progress-fill"></div></div><div class="export-progress-actions"><span id="export-percent">0%</span><button id="export-cancel" class="btn btn-outline" type="button">Cancel export</button><a id="export-download" class="btn btn-primary" href="#" hidden>↓ Download MP4</a></div></div>
+              <p class="export-help">FFmpeg required for export. Veo clips are processed on demand; exporting may use network data and take longer than realtime on slower computers.</p>
+            </div>
+            <div class="studio-footer"><span><span class="info-circle">i</span> Pause the video and choose a drawing tool to annotate</span><div class="history-controls"><button id="undo" title="Undo (Ctrl/Cmd+Z)">↶ Undo</button><button id="redo" title="Redo (Ctrl/Cmd+Shift+Z)">↷ Redo</button></div></div>
+          </section>
+          <div class="bottom-note"><span class="green-tick">✓</span><div><strong>Real editing, no simulated analysis.</strong><span>Save tagged clips and playlists as lightweight timestamps, with no duplicate match video. Export saved clips and playlists to MP4, optionally with timestamped tactical drawings.</span></div></div>
+        </main>
+
+        <aside class="inspector"><div class="inspector-header"><span>ANALYSIS PANEL</span><span class="inspector-live">● EDITOR</span></div><div class="inspector-tabs"><button id="tab-clips" type="button" class="inspector-tab active" aria-controls="clips-pane" aria-selected="true">Clips &amp; playlists</button><button id="tab-annotations" type="button" class="inspector-tab" aria-controls="annotations-pane" aria-selected="false">Annotations</button></div>
+          <div id="clips-pane">
+            <div class="inspector-section clip-inspector-section">
+              <div class="section-heading"><strong>MATCH CLIPS</strong><span id="clip-count">0 clips</span></div>
+              <p class="section-help">Play, edit and tag the moments you saved. Footage remains in the original match.</p>
+              <input id="clip-filter" class="field" aria-label="Filter clips by name or category" placeholder="Filter clips or tags…" />
+              <div id="clip-list" class="clip-list" aria-live="polite"><div class="list-empty">No clips yet</div></div>
+            </div>
+            <div class="inspector-section clip-inspector-section">
+              <div class="section-heading"><strong>PLAYLISTS</strong><span id="playlist-count">0 playlists</span></div>
+              <div class="playlist-create"><input id="playlist-title" class="field" maxlength="100" aria-label="New playlist name" placeholder="e.g. First-half pressing" /><button id="create-playlist" class="btn btn-primary" type="button">Create</button></div>
+              <label class="form-label" for="playlist-select">SELECT PLAYLIST</label><select id="playlist-select" class="field" aria-label="Selected playlist"><option value="">Choose a playlist</option></select>
+              <div class="playlist-controls"><button id="play-playlist" class="btn btn-outline" type="button">▶ Play all</button><button id="stop-playlist" class="btn btn-outline" type="button">■ Stop</button><button id="rename-playlist" class="btn btn-outline" type="button">Rename</button><button id="delete-playlist" type="button" class="btn btn-outline btn-alert">Delete</button></div>
+              <div id="playlist-queue" class="playlist-queue"><div class="list-empty">Create or select a playlist to organise clips.</div></div>
+            </div>
+          </div>
+          <div id="annotations-pane" hidden>
+            <div class="inspector-section pro-features"><div class="section-heading"><strong>DIRECTOR TOOLS</strong><span>PRO</span></div>
+              <p class="section-help">Draw a tactical annotation and the editor adds a three-second freeze automatically at that match moment. Repeated drawings at the same instant share one hold.</p>
+              <label class="auto-freeze-option"><input id="auto-freeze" type="checkbox" checked /> Automatically freeze for 3 seconds when I add an annotation</label>
+              <div class="director-controls"><label class="form-label" for="freeze-hold">FREEZE LENGTH (SECONDS)</label><input id="freeze-hold" class="field" type="number" min="0.5" max="20" step="0.5" value="3"/><button id="add-freeze" class="btn btn-primary">❚❚ Freeze at playhead</button></div>
+              <div class="director-controls"><label class="form-label" for="zoom-scale">ZOOM AMOUNT</label><select id="zoom-scale" class="field"><option value="1.3">1.3×</option><option value="1.6" selected>1.6×</option><option value="2">2.0×</option></select><button id="add-zoom" class="btn btn-outline">＋ Zoom selected area (4s)</button></div>
+              <div class="director-controls"><label class="form-label" for="template-select">TACTICAL TEMPLATE</label><select id="template-select" class="field"><option value="press">Pressing trap</option><option value="pass">Passing lane + movement</option><option value="defence">Defensive compactness</option></select><button id="insert-template" class="btn btn-outline" type="button">＋ Insert editable shapes</button></div>
+              <div id="effects-list" class="effects-list"><div class="list-empty">No freeze frames or zooms</div></div>
+            </div><div class="inspector-section"><div class="section-heading"><strong>TACTICAL MARKUP</strong><span id="right-count">0 items</span></div><p class="section-help">Mark moments and focus attention on the footage. Every annotation has a start and end time.</p><div id="annotation-list" class="annotation-list"><div class="list-empty">No annotations yet.<br />Choose a drawing tool to begin.</div></div></div>
+          <div class="inspector-section properties-section"><div class="section-heading"><strong>SELECTED ANNOTATION</strong></div><div id="properties-empty" class="properties-empty">Select a drawing on the video or in the list to edit its properties.</div><div id="properties-form" hidden>
+            <label class="form-label" for="prop-text">Label</label><input id="prop-text" class="field" maxlength="120" placeholder="Text label" />
+            <label class="form-label">Colour</label><div id="prop-colors" class="prop-colors"></div>
+            <label class="form-label" for="prop-width">Line weight <span id="width-label">4</span></label><input id="prop-width" type="range" min="1" max="12" value="4" />
+            <div class="time-fields"><div><label class="form-label" for="prop-start">Appear MM:SS</label><input id="prop-start" class="field" type="text" placeholder="MM:SS" /></div><div><label class="form-label" for="prop-end">Disappear MM:SS</label><input id="prop-end" class="field" type="text" placeholder="MM:SS" /></div></div>
+            <label class="form-label" for="prop-fade">Fade in/out <span id="fade-label">0s</span></label><input id="prop-fade" type="range" min="0" max="1" value="0" step="0.1"/>
+            <div id="bend-wrap"><label class="form-label" for="prop-bend">Curve bend</label><input id="prop-bend" type="range" min="-0.5" max="0.5" step="0.02" value="-0.18"/></div>
+<div class="keyframe-area"><small>For AI tracking, pause the match and press <strong>Detect players (AI)</strong> above the video, then click the detected player. Manual correction remains available below.</small><details class="manual-tracking"><summary>Manual correction (advanced)</summary><button id="add-keyframe" class="btn btn-outline" type="button">＋ Add manual correction point</button><small id="keyframe-hint">If AI tracking loses the player, manually adjust the marker at a later moment to correct the saved path.</small></details></div>
+            <button id="delete-annotation" class="btn-delete">✕ &nbsp; Delete annotation</button>
+          </div></div>
+          </div><div class="inspector-bottom"><span class="bottom-icon">⌁</span><div>Freeze frames, player highlights and zooms are saved locally with this match. Clips and playlists can be exported to MP4 using FFmpeg. Optional RF-DETR player detection and ByteTrack foot markers work on short video sections. Detection is not player identity recognition; review tracks before exporting.</div></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+  <input id="file-input" type="file" accept=".mp4,.mov,.m4v,.webm,video/mp4,video/quicktime,video/webm" hidden />
+  <div id="link-modal" class="link-modal" role="dialog" aria-modal="true" aria-labelledby="link-modal-title" hidden>
+    <form id="link-form" class="link-card">
+      <div class="link-modal-top"><div class="link-icon">↗</div><button id="close-link" type="button" aria-label="Close dialog" class="source-remove">×</button></div>
+      <h2 id="link-modal-title">Add a Veo or video link</h2>
+      <p>Paste a publicly accessible Veo match link to start watching without downloading 3–4 GB. yt-dlp is needed to resolve Veo streams.</p>
+      <label class="form-label" for="link-input">VIDEO OR VEO URL</label>
+      <input id="link-input" class="field" type="url" required maxlength="2048" placeholder="https://app.veo.co/..." autocomplete="off" spellcheck="false" />
+      <div class="link-explainer"><strong>Choose how to open the Veo match:</strong>
+        <label class="mode-option"><input type="radio" name="veo-mode" value="stream" checked /> <span><strong>Stream instantly (recommended)</strong><small>No full download · Video stays on Veo · Requires internet</small></span></label>
+        <label class="mode-option"><input type="radio" name="veo-mode" value="download" /> <span><strong>Download full match</strong><small>Use offline · Requires local disk space and download time</small></span></label>
+        <small>For publicly accessible footage you have permission to analyse. Private links may fail; playback depends on the host supporting byte-range requests. The highlighted clip in a Veo URL does not trim the match.</small>
+      </div>
+      <div class="link-modal-buttons"><button id="cancel-link" type="button" class="btn btn-outline">Cancel</button><button id="save-link" type="submit" class="btn btn-primary">Open match</button></div>
+    </form>
+  </div>
+  <div id="upload-progress" class="upload-progress" hidden><div class="upload-card"><div class="upload-symbol">⇧</div><h3 id="upload-title">Importing match footage</h3><div id="upload-file-label" class="upload-file-label"></div><div class="progress-track"><div id="progress-bar" class="progress-bar"></div></div><strong id="progress-label">0%</strong><p id="upload-help">Keep this window open while the video is copied to local storage.</p><button id="cancel-veo-import" type="button" class="btn btn-outline" hidden>Cancel Veo import</button></div></div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>
