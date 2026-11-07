@@ -1,0 +1,20 @@
+{
+  "name": "touchline-studio",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local-first professional football telestration: instant Veo streaming, manual highlights, keyframes, freeze frames, zooms, clips and MP4 export",
+  "scripts": {
+    "start": "node server/index.mjs",
+    "dev": "node --watch server/index.mjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
