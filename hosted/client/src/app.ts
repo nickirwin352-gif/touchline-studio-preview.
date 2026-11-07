@@ -848,6 +848,9 @@ function renderSourceStrip(): void {
 function openLinkDialog(): void {
   if (isUploading) return;
   el('link-modal').hidden = false;
+    const veoStatus = el<HTMLParagraphElement>('veo-link-status');
+    veoStatus.hidden = true;
+    veoStatus.textContent = '';
   const input = el<HTMLInputElement>('link-input');
   input.value = project?.sourceLink || project?.videoUrl || '';
   input.focus();
@@ -913,12 +916,20 @@ async function saveLink(): Promise<void> {
   if (!project || isUploading) return;
   const raw = el<HTMLInputElement>('link-input').value.trim();
   const direct = isDirectVideoLink(raw);
-  if ((hasFootage(project)) && !confirm('Replacing footage clears existing annotations, clips and playlists because their timestamps belong to the old recording. Continue?')) return;
-  const id = project.id;
+const id = project.id;
   await saveNow();
   isUploading = true;
+  const veoStatus = el<HTMLParagraphElement>('veo-link-status');
   el<HTMLButtonElement>('save-link').disabled = true;
   try {
+    if (!direct && document.querySelector<HTMLInputElement>('input[name="veo-mode"]:checked')?.value !== 'download') {
+      veoStatus.hidden = false;
+      veoStatus.textContent = 'Checking public video playback and seeking…';
+      text('save-link', 'Checking Veo…');
+      await api<{ status: string; matchId: string; seekable: boolean }>('/api/veo/preflight', { method: 'POST', body: JSON.stringify({ url: raw }) });
+      veoStatus.textContent = '✓ Public recording found. Seeking is supported.';
+    }
+    if (hasFootage(project) && !confirm('The checked video is ready. Replace the previous match and clear its drawings, clips and playlists?')) return;
     if (direct) {
       await api<Project>(`/api/projects/${id}/video-url`, { method: 'PUT', body: JSON.stringify({ url: raw }) });
       closeLinkDialog();
@@ -940,9 +951,11 @@ async function saveLink(): Promise<void> {
       }
     }
   } catch (error) {
+    veoStatus.hidden = false;
+    veoStatus.textContent = 'Veo link could not be played: ' + (error as Error).message;
     isUploading = false;
     notify(`Could not import link: ${(error as Error).message}`, true);
-  } finally { el<HTMLButtonElement>('save-link').disabled = false; text('save-link', 'Open match'); }
+  } finally { isUploading = false; el<HTMLButtonElement>('save-link').disabled = false; text('save-link', 'Open match'); }
 }
 async function removeSource(): Promise<void> {
   if (!project || isUploading) return;

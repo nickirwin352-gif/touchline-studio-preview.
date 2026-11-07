@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { createProject, deleteProject, ensureStorage, getProject, listProjects, updateProject, validId, validatePatch } from './storage.mjs';
 import { serveVideo, uploadVideo, setVideoUrl } from './media.mjs';
 import { beginVeoImport, getImportStatus, cancelVeoImport, requireIdle } from './veo-import.mjs';
-import { activateVeoStream, deactivateVeoStream, requestVideoRange, clearResolvedStream } from './veo-stream.mjs';
+import { activateVeoStream, deactivateVeoStream, requestVideoRange, clearResolvedStream, inspectPublicVeoLink } from './veo-stream.mjs';
 import { startExport, getExportJob, cancelExport, downloadExport, hasActiveExport, discardExportsForProject } from './export.mjs';
 import { startAiJob, getAiJob, cancelAiJob, cancelAiForProject, hasActiveAiJob } from './ai-tracking.mjs';
 
@@ -94,6 +94,12 @@ export async function handler(req, res) {
       }
       if (req.method === 'DELETE') { if (hasActiveAiJob(id)) return json(res,409,{error:"Finish or cancel player tracking before replacing footage"});
         if (hasActiveExport(id)) return json(res,409,{error:'Wait for or cancel the active export before deleting this project'}); requireIdle(id); cancelAiForProject(id); clearResolvedStream(id); await deleteProject(id); await discardExportsForProject(id); return json(res, 200, { deleted: true }); }
+    }
+    if (path === '/api/veo/preflight' && req.method === 'POST') {
+      const body = await readJson(req);
+      if (!body || typeof body.url !== 'string') return json(res, 400, { error: 'Missing public Veo match URL' });
+      // Read-only: never replace a match or remove existing clips during link checks.
+      return json(res, 200, await inspectPublicVeoLink(body.url));
     }
     const veoStreamMatch = /^\/api\/projects\/([^/]+)\/veo-stream$/.exec(path);
     if (veoStreamMatch) {

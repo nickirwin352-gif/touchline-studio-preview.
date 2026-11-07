@@ -1253,6 +1253,9 @@ function openLinkDialog() {
     if (isUploading)
         return;
     el('link-modal').hidden = false;
+    const veoStatus = el('veo-link-status');
+    veoStatus.hidden = true;
+    veoStatus.textContent = '';
     const input = el('link-input');
     input.value = project?.sourceLink || project?.videoUrl || '';
     input.focus();
@@ -1336,13 +1339,20 @@ async function saveLink() {
         return;
     const raw = el('link-input').value.trim();
     const direct = isDirectVideoLink(raw);
-    if ((hasFootage(project)) && !confirm('Replacing footage clears existing annotations, clips and playlists because their timestamps belong to the old recording. Continue?'))
-        return;
-    const id = project.id;
+const id = project.id;
     await saveNow();
     isUploading = true;
+    const veoStatus = el('veo-link-status');
     el('save-link').disabled = true;
     try {
+        if (!direct && document.querySelector('input[name="veo-mode"]:checked')?.value !== 'download') {
+            veoStatus.hidden = false;
+            veoStatus.textContent = 'Checking public video playback and seeking…';
+            text('save-link', 'Checking Veo…');
+            await api('/api/veo/preflight', { method: 'POST', body: JSON.stringify({ url: raw }) });
+            veoStatus.textContent = '✓ Public recording found. Seeking is supported.';
+        }
+        if (hasFootage(project) && !confirm('The checked video is ready. Replace the previous match and clear its drawings, clips and playlists?')) return;
         if (direct) {
             await api(`/api/projects/${id}/video-url`, { method: 'PUT', body: JSON.stringify({ url: raw }) });
             closeLinkDialog();
@@ -1369,10 +1379,13 @@ async function saveLink() {
         }
     }
     catch (error) {
+        veoStatus.hidden = false;
+        veoStatus.textContent = 'Veo link could not be played: ' + error.message;
         isUploading = false;
         notify(`Could not import link: ${error.message}`, true);
     }
     finally {
+        isUploading = false;
         el('save-link').disabled = false;
         text('save-link', 'Open match');
     }
