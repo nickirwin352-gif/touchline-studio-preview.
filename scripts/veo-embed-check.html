@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta name="theme-color" content="#0c121b"/>
+  <title>Veo Player Test | Touchline Studio</title>
+  <style>
+    :root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif}
+    *{box-sizing:border-box}
+    body{margin:0;background:#0b131d;color:#eff5f1;line-height:1.5}
+    header{display:flex;align-items:center;justify-content:space-between;gap:16px;border-bottom:1px solid #2d424c;padding:16px max(20px,calc((100% - 1180px)/2))}
+    .brand{font-size:18px;font-weight:850;letter-spacing:.025em}
+    .brand span{color:#b7ff75}
+    a{color:#c5ffa0} a:focus-visible,button:focus-visible,input:focus-visible{outline:3px solid #b7ff75;outline-offset:2px}
+    main{width:min(1140px,calc(100% - 36px));margin:26px auto 44px}
+    h1{font-size:clamp(22px,4vw,32px);line-height:1.2;margin:0 0 10px}
+    p{color:#aec1ca;margin:8px 0 15px}
+    .label{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:#a9b9c5;font-weight:800}
+    .testbox{background:#16222d;border:1px solid #304351;border-radius:12px;padding:18px;margin:18px 0}
+    .entry{display:flex;gap:10px;flex-wrap:wrap;margin-top:9px}
+    input{background:#0c1722;border:1px solid #51636d;color:#fff;border-radius:8px;padding:12px;min-width:220px;flex:1;font:inherit}
+    button,.btn{display:inline-flex;align-items:center;justify-content:center;background:#b7ff75;color:#102114;font-weight:800;font:inherit;border:0;border-radius:8px;padding:11px 16px;cursor:pointer;text-decoration:none}
+    .secondary{border:1px solid #536977;background:transparent;color:#edf5ef}
+    .small{font-size:13px}
+    .viewer{aspect-ratio:16/9;min-height:230px;border:1px solid #42525e;border-radius:10px;overflow:hidden;background:#080d14;display:grid;place-items:center}
+    iframe{display:block;width:100%;height:100%;min-height:230px;border:0}
+    #placeholder{color:#92aab5;padding:24px;text-align:center}
+    .status{padding:10px 12px;border:1px solid #4a6655;border-radius:8px;background:#20362b;color:#d4edc9;font-size:13px;margin:12px 0}
+    .outcome{margin-top:15px;padding:13px;border-radius:9px;border:1px solid #536d76;background:#101e27}
+    .outcome p{margin:0 0 8px}
+    .buttons{display:flex;gap:10px;flex-wrap:wrap;margin-top:15px}
+    .buttons button{flex:1;min-width:220px}
+    [hidden]{display:none!important}
+    .foot{font-size:13px;border-top:1px solid #2b404b;padding-top:18px;margin-top:22px}
+    @media(max-width:650px){header{padding:15px 18px}.viewer{min-height:210px}.entry button{width:100%}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">↗ TOUCHLINE <span>STUDIO</span></div>
+  <a href="../classic/">Back to Classic editor</a>
+</header>
+<main>
+  <div class="label">Free experiment · no Render · no downloads</div>
+  <h1>Can Veo's own player open inside a different website?</h1>
+  <p>This isolated test tries to display the original public Veo match page in a frame. It does <strong>not</strong> copy footage, bypass Veo permissions, or change your Touchline projects.</p>
+  <section class="testbox">
+    <label class="label" for="match-url">Public Veo match link</label>
+    <form id="link-form" class="entry">
+      <input id="match-url" name="match" type="url" spellcheck="false" autocomplete="off" required placeholder="https://app.veo.co/matches/..."/>
+      <button type="submit">Test Veo player</button>
+    </form>
+    <div id="status" class="status" role="status">Enter a public Veo link to begin.</div>
+    <div class="viewer">
+      <div id="placeholder">The Veo player will be attempted here.</div>
+      <iframe id="veo-frame" hidden title="Embedded public Veo match test" referrerpolicy="strict-origin-when-cross-origin" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>
+    </div>
+    <p class="small"><strong>Important:</strong> A blank frame, an error screen, or a message saying the site refused to connect means this embed test did not succeed. A frame's load event alone does not mean the match plays.</p>
+    <div id="actions" class="buttons" hidden>
+      <button id="plays" type="button">The match plays here</button>
+      <button id="blocked" class="secondary" type="button">Blank / blocked / won't play</button>
+      <a id="original" class="btn secondary" href="https://app.veo.co/" target="_blank" rel="noopener noreferrer">Open original Veo player</a>
+    </div>
+    <div id="result" class="outcome" hidden role="status"></div>
+  </section>
+  <p class="foot">If the frame plays, that confirms <em>viewing</em> can work without Render. It does <strong>not</strong> establish that Touchline can control Veo's playhead, synchronise tactical overlays, or export clips. Those require an authorised player API or an accessible video file. If the frame is blocked, our free alternative is Companion Mode: use Veo's original player alongside Touchline while keeping timestamps and analysis notes.</p>
+</main>
+<script>
+(function(){
+  'use strict';
+  const input=document.getElementById('match-url');
+  const frame=document.getElementById('veo-frame');
+  const status=document.getElementById('status');
+  const placeholder=document.getElementById('placeholder');
+  const actions=document.getElementById('actions');
+  const result=document.getElementById('result');
+  const original=document.getElementById('original');
+  function normalize(value){
+    if(typeof value!=='string'||value.length>2048)throw Error('Use a valid Veo match link.');
+    const u=new URL(value.trim());
+    if(u.protocol!=='https:'||u.hostname!=='app.veo.co'||u.port||u.username||u.password||
+       !/^\/matches\/[A-Za-z0-9_-]+\/?$/.test(u.pathname))
+      throw Error('Use a link starting with https://app.veo.co/matches/');
+    return u;
+  }
+  function load(value){
+    result.hidden=true;
+    try{
+      const url=normalize(value);
+      input.value=url.toString();
+      original.href=url.toString();
+      placeholder.hidden=true;
+      frame.hidden=false;
+      actions.hidden=false;
+      status.textContent='Trying to show Veo inside this page. Check whether the video appears AND actually plays.';
+      frame.src=url.toString();
+    }catch(error){
+      status.textContent=error.message||'Invalid match link';
+      actions.hidden=true;
+      frame.hidden=true;frame.removeAttribute('src');
+      placeholder.hidden=false;
+    }
+  }
+  document.getElementById('link-form').addEventListener('submit',event=>{
+    event.preventDefault();
+    load(input.value);
+  });
+  frame.addEventListener('load',()=>{
+    status.textContent='The embedded page finished a load attempt. Play the video to tell whether Veo actually permits this.';
+  });
+  document.getElementById('plays').addEventListener('click',()=>{
+    result.hidden=false;
+    result.textContent='Viewing works in this browser! Next, we would still need official access to playback time/controls before matching annotations to the Veo timeline. This alone is not a fully working analysis editor.';
+  });
+  document.getElementById('blocked').addEventListener('click',()=>{
+    result.hidden=false;
+    result.textContent='Veo is not playable inside this frame. That is a website/player restriction rather than a private match, since you have already watched it while signed out. We should not force a bypass; the free fallback is a side-by-side Companion Mode.';
+  });
+  const preset=new URLSearchParams(location.search).get('url');
+  if(preset)load(preset);
+})();
+</script>
+</body>
+</html>

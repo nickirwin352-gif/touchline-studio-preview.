@@ -70,6 +70,10 @@ jobs:
           else
             echo "::warning::Render service was not confirmed online (HTTP $status). Check your Render deployment dashboard."
           fi
+      - name: Verify free Veo embed experiment page
+        run: |
+          test -s _site/veo-check/index.html
+          grep -q 'Can Veo' _site/veo-check/index.html
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
