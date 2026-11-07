@@ -1,22 +1,21 @@
-# Optional full editor companion. GitHub Pages alone cannot proxy Veo video.
-# This Blueprint requires approval of Starter and persistent disk charges.
+# FREE personal Veo test server. No disk, no charge for the instance.
+# Your project metadata is backed up to the same browser automatically (free mode).
+# IMPORTANT: local uploaded video files and in-progress MP4 exports are temporary.
 services:
   - type: web
-    name: touchline-studio-classic
+    name: touchline-veo-free
     runtime: docker
     dockerfilePath: ./hosted/Dockerfile
     dockerContext: ./hosted
-    plan: starter
+    plan: free
     branch: main
     autoDeployTrigger: commit
-    disk:
-      name: touchline-classic-data
-      mountPath: /var/data
-      sizeGB: 10
     envVars:
       - key: TOUCHLINE_CLOUD_MODE
         value: "1"
+      - key: TOUCHLINE_FREE_MODE
+        value: "1"
       - key: TOUCHLINE_DATA_DIR
-        value: /var/data
+        value: /tmp/touchline-free
       - key: TOUCHLINE_ACCESS_PASSWORD
         sync: false

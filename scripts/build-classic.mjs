@@ -16,6 +16,8 @@ if(!html.includes('src="/assets/app.js"') || !html.includes('href="/styles.css"'
 html=html.replace('href="/styles.css"','href="./styles.css?build='+(process.env.GITHUB_SHA||'local')+'"');
 html=html.replace('src="/assets/app.js"','src="./assets/app.js?build='+(process.env.GITHUB_SHA||'local')+'"');
 html=html.replace('PLAYER TRACKING · v1.1','COACHING EDITOR · CLASSIC');
+html=html.replace('<script src="/free-persistence.js"></script>', ''); // Paid/Free server-only feature, not GitHub Pages
+
 await writeFile(join(out,'classic/index.html'),html);
 let style=await readFile(join(out,'classic/styles.css'),'utf8');
 style+=[
