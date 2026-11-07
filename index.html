@@ -52,7 +52,7 @@
         </div>
         <div id="source-panel" class="source-panel" hidden>
           <div><strong id="source-title">Veo reference saved</strong><small id="source-desc">You can keep your original link with this project.</small></div>
-          <button id="open-source" class="btn btn-muted">Open Veo ↗</button>
+          <div class="source-actions"><button id="open-source" class="btn btn-muted">Open Veo ↗</button><button id="attach-veo-file" class="btn btn-primary">＋ Attach downloaded match</button></div>
         </div>
         <section class="editor">
           <div class="editor-head">
@@ -70,17 +70,20 @@
             <button data-tool="pen" class="tool" title="Freehand drawing — P">✎ <span>Pen</span></button>
             <button data-tool="text" class="tool" title="Add a label — T">T <span>Label</span></button>
             <button data-tool="spotlight" class="tool" title="Highlight one area — S">◉ <span>Spotlight</span></button>
+            <button data-tool="zoom" class="tool" title="Click a focus point to add a smooth camera zoom — Z">⌕ <span>Zoom</span></button>
             <span class="grow"></span>
             <div id="palette" class="palette" aria-label="Colours"></div>
           </div>
           <div class="stage-wrap">
             <div id="stage" class="stage">
+              <div id="visual-layer" class="visual-layer">
               <video id="video" playsinline preload="metadata"></video>
               <div id="demo-pitch" class="demo-pitch" aria-label="Practice pitch">
                 <div class="pitch-grass"></div><div class="pitch-lines"><div class="pitch-half"></div><div class="pitch-circle"></div><div class="pitch-box left"></div><div class="pitch-box right"></div><div class="pitch-goal left"></div><div class="pitch-goal right"></div><div class="pitch-spot"></div></div>
                 <div class="pitch-text"><strong>YOUR ANALYSIS STARTS HERE</strong><small>Draw on the practice pitch or import a match video</small></div>
               </div>
               <svg id="overlay" class="overlay" viewBox="0 0 1000 562.5" preserveAspectRatio="none" aria-label="Tactical annotation layer"></svg>
+              </div>
               <div id="freeze-label" class="freeze-label" hidden>❚❚ FREEZE FRAME <span id="freeze-left"></span></div>
               <div id="reconnect-panel" class="reconnect-panel" hidden><strong>Reconnect your match video</strong><small>Your annotations are safe. The browser needs permission to reopen the original file.</small><button id="reconnect" class="btn btn-primary">Reconnect video</button></div>
             </div>
@@ -110,7 +113,7 @@
             </div>
           </div>
         </section>
-        <p class="below-note"><span>✓</span> No Python, no model downloads. Rings are placed manually and stay fixed on the pitch. Browser mode saves edits locally; advanced MP4 export and authenticated Veo streaming stay in the desktop edition for now.</p>
+        <p class="below-note"><span>✓</span> No Python, no model downloads. Rings are placed manually and stay fixed on the pitch. Browser edition saves editing locally and can export short annotated clips in supported browsers. Veo playback links remain within Veo; attach footage you are authorised to download.</p>
       </div>
     </main>
     <aside class="inspector">
@@ -131,6 +134,7 @@
             <label class="field-label">SIZE / LINE WEIGHT <output id="weight-output">4</output><input id="prop-weight" type="range" min="1" max="12" step="1" value="4"></label>
             <div class="field-grid"><label class="field-label">START (SEC)<input id="prop-start" type="number" min="0" step=".1"></label><label class="field-label">END (SEC)<input id="prop-end" type="number" min="0" step=".1"></label></div>
             <label class="field-label">FADE (SEC) <output id="fade-output">0.3</output><input id="prop-fade" type="range" min="0" max="1.5" step=".1" value=".3"></label>
+            <label class="field-label">APPEARANCE <select id="prop-appearance" class="field-select"><option value="fade">Soft fade</option><option value="pop">Pop into focus</option></select></label>
             <button id="delete-annotation" class="danger-button">Delete graphic</button>
           </div>
         </div>
@@ -138,6 +142,13 @@
           <div class="panel-head"><strong>FREEZE FRAMES</strong><span id="freeze-count">0 freezes</span></div>
           <p>Press freeze at the playhead to pause the action during playback, then resume automatically.</p>
           <div id="freeze-list" class="item-list"></div>
+        </div>
+        <div class="panel-section">
+          <div class="panel-head"><strong>CAMERA ZOOMS</strong><span id="zoom-count">0 zooms</span></div>
+          <p>Choose Zoom in the toolbar, then click the part of the pitch you want to magnify. The camera zooms in and back out smoothly.</p>
+          <label class="field-label">ZOOM STRENGTH <select id="zoom-scale" class="field-select"><option value="1.3">1.3× gentle</option><option value="1.6" selected>1.6× standard</option><option value="2">2.0× close-up</option></select></label>
+          <label class="field-label">ZOOM DURATION <select id="zoom-hold" class="field-select"><option value="2">2 seconds</option><option selected value="4">4 seconds</option><option value="6">6 seconds</option></select></label>
+          <div id="zoom-list" class="item-list"></div>
         </div>
       </div>
       <div id="clips-pane" hidden>
@@ -150,11 +161,33 @@
           <button id="save-clip" class="btn btn-primary full">＋ Save clip</button>
         </div>
         <div class="panel-section"><div class="panel-head"><strong>SAVED CLIPS</strong><span id="clip-count">0 clips</span></div><div id="clip-list" class="item-list"></div></div>
-        <div class="panel-section"><div class="panel-head"><strong>VIDEO EXPORT</strong></div><p>Professional annotated MP4 rendering remains available in the Windows version while we perfect this lighter editor.</p></div>
+        <div class="panel-section">
+          <div class="panel-head"><strong>EXPORT ANNOTATED VIDEO</strong><span class="lime">BETA</span></div>
+          <p>Render your coloured drawings, zoom effects and freeze frames into a shareable clip. Runs on this computer, not on a server. MP4 when supported, otherwise WebM.</p>
+          <label class="field-label">EXPORT RANGE
+            <select id="render-range" class="field-select"><option value="current">IN / OUT fields above</option></select>
+          </label>
+          <label class="field-label">RESOLUTION
+            <select id="render-size" class="field-select"><option value="1280" selected>720p — recommended</option><option value="1920">1080p — slower</option></select>
+          </label>
+          <label class="checkbox-row"><input id="render-audio" type="checkbox" checked> Include source video audio when supported</label>
+          <button id="start-render" class="btn btn-primary full">↓ Export annotated clip</button>
+          <button id="cancel-render" class="btn btn-muted full" hidden>Cancel export</button>
+          <div id="render-status" class="render-status" role="status" aria-live="polite">Choose an IN / OUT range or a saved clip (up to 3 minutes).</div>
+        </div>
       </div>
       <div class="inspector-foot">⌁ The original video remains on your computer. Download a project backup if you need to move it to another browser.</div>
     </aside>
   </div>
+  <dialog id="veo-dialog" class="veo-dialog" aria-labelledby="veo-heading">
+    <div class="veo-heading"><div class="brand-icon">↗</div><div><small>TOUCHLINE SOURCES</small><h2 id="veo-heading">Bring your Veo match into the editor</h2></div></div>
+    <p>Keep the original Veo match link with this project. If you have download permission in your Veo Clubhouse, download the follow-cam MP4 there, then open that file here. Your match is not uploaded to GitHub.</p>
+    <label class="field-label" for="veo-link-input">VEO MATCH LINK (OR DIRECT MP4 LINK)</label>
+    <input id="veo-link-input" type="url" placeholder="https://app.veo.co/matches/..." spellcheck="false" autocomplete="off">
+    <div class="veo-dialog-buttons"><button id="save-veo" class="btn btn-primary">Save match link</button><button id="veo-open" class="btn btn-muted" type="button">Open Veo ↗</button></div>
+    <div class="veo-steps"><strong>Working with Veo recordings</strong><div><b>1</b> Save the Veo match link.</div><div><b>2</b> Open your recording in Veo and choose <em>Download full game</em> (if your account has permission).</div><div><b>3</b> Attach the MP4 here to analyse, create clips and export with drawings.</div></div>
+    <div class="veo-footer"><button id="veo-file" class="btn btn-primary">＋ Attach match video</button><button id="veo-close" class="btn btn-muted">Close</button></div>
+  </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

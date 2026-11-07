@@ -6,10 +6,14 @@ on:
     paths:
       - 'index.html'
       - 'app.js'
+      - 'director.js'
+      - 'recorder.js'
       - 'styles.css'
       - 'package.json'
       - 'tests/**'
       - '.github/workflows/pages.yml'
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -34,15 +38,18 @@ jobs:
       - name: Assemble static site with cache-busted assets
         run: |
           mkdir -p _site
-          cp index.html app.js styles.css .nojekyll _site/
+          cp index.html app.js director.js recorder.js styles.css .nojekyll _site/
           sed -i "s/@@BUILD_SHA@@/${GITHUB_SHA}/g" _site/index.html
       - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
       - name: Upload editor artifact
+        if: github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4
         with:
           path: _site
   deploy:
+    if: github.event_name != 'pull_request'
     needs: build
     runs-on: ubuntu-latest
     permissions:
