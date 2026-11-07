@@ -169,3 +169,6 @@
 
 /* Classic coaching edition: AI model setup is intentionally not part of the workflow. */
 #ai-detect,#ai-control-strip{display:none!important}
+
+.veo-link-status{margin:12px 0;padding:10px 12px;border-radius:6px;background:#203329;color:#d7f8cc;border:1px solid #54724e;font-size:12px;line-height:1.5}
+.veo-link-status[hidden]{display:none!important}

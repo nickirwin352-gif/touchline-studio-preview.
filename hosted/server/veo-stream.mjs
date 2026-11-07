@@ -19,6 +19,9 @@ const BYTE_CHUNK = 4 * 1024 * 1024;
 const CACHE_MS = 8 * 60 * 1000;
 const cache = new Map();
 const pending = new Map();
+const preflights = new Map();
+const PREFLIGHT_MS = 90 * 1000;
+const MAX_PREFLIGHTS = 24;
 const fail = (message, status = 502) => Object.assign(new Error(message), { status });
 
 function isPublicIP(address) {
@@ -86,6 +89,71 @@ export async function extractVeoVideoUrl(matchUrl) {
   return assertSafeStreamUrl(urls[0]);
 }
 
+/**
+ * Check that a publicly reachable Veo recording is actually suitable for
+ * in-editor seeking BEFORE replacing any footage or saved annotations.
+ * We never send signed CDN URLs back to the browser.
+ */
+export async function probeStreamRange(url, options = {}) {
+  const fetcher = options.fetcher || fetch;
+  const checker = options.checker || assertSafeStreamUrl;
+  const signal = options.signal || AbortSignal.timeout(15000);
+  let response;
+  try {
+    response = await guardedFetch(url, {
+      method: 'GET',
+      headers: { Range: 'bytes=0-1', 'Accept-Encoding': 'identity' },
+      signal
+    }, fetcher, checker);
+    if (response.status === 401 || response.status === 403)
+      throw fail('Veo denied access to this recording. Check that the match is public.', 403);
+    if (response.status === 404 || response.status === 410)
+      throw fail('This Veo recording is no longer available.', 404);
+    if (response.status !== 206)
+      throw fail('The Veo recording did not support video seeking. Try a different public recording.', 422);
+    const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(response.headers.get('content-range') || '');
+    if (!match || Number(match[1]) !== 0 ||
+        Number(match[2]) < 1 || Number(match[2]) > 65535 ||
+        !Number.isSafeInteger(Number(match[3])) || Number(match[3]) <= Number(match[2])) {
+      throw fail('The video server returned an invalid seek response.', 502);
+    }
+    const contentType = (response.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+    if (contentType === 'text/html' || contentType === 'application/json' || contentType === 'text/plain')
+      throw fail('Veo returned a webpage rather than a video stream.', 422);
+    if (!response.body)
+      throw fail('The video server returned an empty response.', 502);
+    return { seekable: true, sizeBytes: Number(match[3]), contentType: contentType || 'video/mp4' };
+  } catch (error) {
+    if (error?.status) throw error;
+    if (error?.name === 'TimeoutError' || error?.name === 'AbortError')
+      throw fail('Veo took too long to respond. Try the link again.', 504);
+    throw fail('Could not contact the Veo video server. Try the link again.', 502);
+  } finally {
+    await response?.body?.cancel?.().catch(() => {});
+  }
+}
+
+function cachedPreflight(match) {
+  const entry = preflights.get(match.extractionUrl);
+  if (entry?.expires > Date.now()) return entry;
+  if (entry) preflights.delete(match.extractionUrl);
+  return null;
+}
+export async function inspectPublicVeoLink(suppliedUrl, extractor = extractVeoVideoUrl, probe = probeStreamRange) {
+  const match = matchMediaUrl(suppliedUrl);
+  let entry = cachedPreflight(match);
+  if (!entry) {
+    const videoUrl = await extractor(match.extractionUrl);
+    const details = await probe(videoUrl);
+    // Keep a bounded, short-lived in-memory cache for the subsequent "Open match".
+    if (preflights.size >= MAX_PREFLIGHTS) preflights.delete(preflights.keys().next().value);
+    entry = { videoUrl, details, expires: Date.now() + PREFLIGHT_MS };
+    preflights.set(match.extractionUrl, entry);
+  }
+  return { status: 'ready', matchId: match.matchId, seekable: !!entry.details.seekable };
+}
+export function clearVeoPreflights() { preflights.clear(); }
+
 export async function resolvedStream(project, extractor = extractVeoVideoUrl) {
   if (!project.remoteVideo || project.remoteVideo.kind !== 'veo' || !project.sourceLink)
     throw fail('This project does not have Veo streaming enabled', 404);
@@ -102,12 +170,14 @@ export async function resolvedStream(project, extractor = extractVeoVideoUrl) {
 }
 export function clearResolvedStream(projectId) { cache.delete(projectId); pending.delete(projectId); }
 
-export async function activateVeoStream(projectId, suppliedUrl, extractor = extractVeoVideoUrl) {
+export async function activateVeoStream(projectId, suppliedUrl, extractor = extractVeoVideoUrl, probe = probeStreamRange) {
   requireIdle(projectId);
   const match = matchMediaUrl(suppliedUrl);
   await getProject(projectId);
   // Fail before modifying the existing project so old footage/annotations survive.
-  const resolvedUrl = await extractor(match.extractionUrl);
+  const inspected = cachedPreflight(match);
+  const resolvedUrl = inspected?.videoUrl || await extractor(match.extractionUrl);
+  if (!inspected) await probe(resolvedUrl);
   let oldVideo = null;
   const updated = await updateProject(projectId, (p) => {
     oldVideo = p.video;
@@ -116,6 +186,7 @@ export async function activateVeoStream(projectId, suppliedUrl, extractor = extr
   });
   clearResolvedStream(projectId);
   cache.set(projectId, { url: resolvedUrl, sourceLink: match.sourceLink, expires: Date.now() + CACHE_MS });
+  preflights.delete(match.extractionUrl);
   if (oldVideo) await rm(join(VIDEO_DIR, oldVideo.storageName), { force: true }).catch(() => {});
   return updated;
 }

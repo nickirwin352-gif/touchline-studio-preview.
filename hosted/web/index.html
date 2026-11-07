@@ -143,10 +143,11 @@
       <label class="form-label" for="link-input">VIDEO OR VEO URL</label>
       <input id="link-input" class="field" type="url" required maxlength="2048" placeholder="https://app.veo.co/..." autocomplete="off" spellcheck="false" />
       <div class="link-explainer"><strong>Choose how to open the Veo match:</strong>
-        <label class="mode-option"><input type="radio" name="veo-mode" value="stream" checked /> <span><strong>Stream instantly (recommended)</strong><small>No full download · Video stays on Veo · Requires internet</small></span></label>
-        <label class="mode-option"><input type="radio" name="veo-mode" value="download" /> <span><strong>Download full match</strong><small>Use offline · Requires local disk space and download time</small></span></label>
+        <label class="mode-option"><input type="radio" name="veo-mode" value="stream" checked /> <span><strong>Stream instantly (recommended)</strong><small>Check that public playback works, then stream and seek in this editor</small></span></label>
+        <label class="mode-option"><input type="radio" name="veo-mode" value="download" /> <span><strong>Download full match (authorised owners only)</strong><small>Public share links are view-only; downloads require Veo permission</small></span></label>
         <small>For publicly accessible footage you have permission to analyse. Private links may fail; playback depends on the host supporting byte-range requests. The highlighted clip in a Veo URL does not trim the match.</small>
       </div>
+      <p id="veo-link-status" class="veo-link-status" role="status" aria-live="polite" hidden></p>
       <div class="link-modal-buttons"><button id="cancel-link" type="button" class="btn btn-outline">Cancel</button><button id="save-link" type="submit" class="btn btn-primary">Open match</button></div>
     </form>
   </div>
