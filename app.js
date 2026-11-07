@@ -1,4 +1,5 @@
 // Touchline Studio browser edition: all editing stays client-side.
+import { installDirector } from './director.js';
 // No backend, AI models, authentication or third-party libraries.
 const $ = (id) => document.getElementById(id);
 const SVG = 'http://www.w3.org/2000/svg';
@@ -12,8 +13,9 @@ const state = {
   demoTime:0, demoPlaying:false, tickAt:0, frameId:0,
   drawing:null, moving:null, saveTimer:null, savePromise:Promise.resolve(),
   undo:[], redo:[], freezeSeen:new Set(), freezeActive:false, freezeTimer:null,
-  previewEnd:null, lastOverlayAt:0
+  previewEnd:null, lastOverlayAt:0, exporting:false, exportAbort:null
 };
+let director=null;
 const video = typeof document !== 'undefined' ? $('video') : null;
 const overlay = typeof document !== 'undefined' ? $('overlay') : null;
 
@@ -43,7 +45,7 @@ function toast(message, isError=false) {
 const projectFactory = () => ({
   id:uid(), title:'Untitled analysis', createdAt:now(), updatedAt:now(),
   duration:90, mediaKind:'demo', mediaName:'', videoUrl:null, sourceLink:null,
-  annotations:[], freezes:[], clips:[]
+  annotations:[], freezes:[], zooms:[], clips:[]
 });
 function openDB() {
   return new Promise((resolve,reject)=>{
@@ -154,6 +156,7 @@ async function selectProject(id) {
   const p=state.projects.find(x=>x.id===id);if(!p)return;
   resetFreeze();state.project=p;state.selected=null;state.undo=[];state.redo=[];
   state.demoTime=0;state.previewEnd=null;
+  p.zooms ||= [];
   $('title').value=p.title;
   $('media-note').textContent=p.mediaKind==='file'?(p.mediaName||'Match video')+' · Local footage':p.mediaKind==='url'?'Direct browser video link':'Practice on the demo pitch or add match footage';
   $('media-state').textContent=isVideo(p)?'MATCH FOOTAGE':'DEMO CANVAS';
@@ -207,8 +210,10 @@ function renderSource() {
   const p=state.project;
   show('source-panel',!!p?.sourceLink);
   if(p?.sourceLink) {
-    $('source-title').textContent='Veo link saved to this project';
-    $('source-desc').textContent='Veo watch links open in Veo; attach video footage to draw over it here.';
+    $('source-title').textContent='Veo recording linked to this project';
+    $('source-desc').textContent=p.mediaKind==='file'&&state.fileReady
+      ?'Your match is ready to analyse; the original Veo link is saved.'
+      :'Open the recording in Veo and attach an authorised downloaded file.';
   }
 }
 function attachLink() {
@@ -273,6 +278,11 @@ function renderAnnotation(a,force=false) {
       g.append(createSvg('polygon',{points:x2+','+y2+' '+p1.join(',')+' '+p2.join(','),fill:a.color,stroke:a.color,'stroke-width':1}));
     }
   }
+  if(a.appearance==='pop' && ['ring','spotlight','text'].includes(a.type)){
+    const progress=clamp((t-a.start)/.32,0,1);
+    const scale=(.65+.35*progress)*(1+Math.sin(progress*Math.PI)*.12);
+    g.setAttribute('transform','translate('+x+' '+y+') scale('+scale+') translate('+(-x)+' '+(-y)+')');
+  }
   if(force) {
     g.append(createSvg('circle',{cx:x,cy:y,r:7,fill:'#ffffff','fill-opacity':'.9',stroke:'#092019','stroke-width':2}));
   }
@@ -289,6 +299,7 @@ function renderOverlay() {
     const preview=renderAnnotation(state.drawing,true);
     if(preview) {preview.removeAttribute('data-id');preview.style.pointerEvents='none';overlay.append(preview);}
   }
+  director?.paintZoom();
 }
 function ensureVisible(a) {
   const t=playhead();
@@ -329,6 +340,7 @@ function annotate(event) {
     return;
   }
   pausePlayback();
+  if(state.tool==='zoom'){director?.addZoom(x,y);setTool('select');return;}
   if(['ring','spotlight','text'].includes(state.tool)) {
     const a=newMarkup(state.tool,x,y);
     if(a.type==='text'){
@@ -375,7 +387,9 @@ function setTool(tool) {
   state.tool=tool;
   document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));
   overlay.classList.toggle('select-tool',tool==='select');
-  $('canvas-hint').textContent=tool==='select'?'Click a graphic and drag to reposition it':tool==='ring'?'Click beneath a player to place a fixed ring':'Click or drag on the video to draw';
+  $('canvas-hint').textContent=tool==='zoom'?'Click a pitch area to add a smooth zoom'
+    :tool==='select'?'Click a graphic and drag to reposition it'
+    :tool==='ring'?'Click beneath a player to place a fixed ring':'Click or drag on the video to draw';
 }
 function renderPalette() {
   const render=(id,callback,selected)=>{
@@ -415,6 +429,7 @@ function renderProperties(){
   $('prop-start').value=Number(a.start.toFixed(1));
   $('prop-end').value=Number(a.end.toFixed(1));
   $('prop-fade').value=a.fade||0;$('fade-output').textContent=String(a.fade||0);
+  $('prop-appearance').value=a.appearance||'fade';
   renderPalette();
 }
 function updateProperty(field,raw) {
@@ -471,7 +486,7 @@ function updateTime() {
   $('seek').value=clamp(t,0,max);$('seek').style.setProperty('--progress',(clamp(t/max,0,1)*100)+'%');
 }
 function handlePlaybackTick() {
-  if(!state.project || !isPlaying() || state.freezeActive)return;
+  if(state.exporting || !state.project || !isPlaying() || state.freezeActive)return;
   const t=playhead();
   if(state.previewEnd!==null && t>=state.previewEnd){
     state.previewEnd=null;pausePlayback();return;
@@ -534,7 +549,7 @@ function quickClip() {
 }
 function renderClipList() {
   const list=$('clip-list');list.replaceChildren();
-  const clips=state.project?.clips||[];$('clip-count').textContent=clips.length+' clips';
+  const clips=state.project?.clips||[];$('clip-count').textContent=clips.length+' clips';director?.refreshClipOptions();
   if(!clips.length){list.append(makeEmpty('No clips yet. Use Save ±5s clip while watching.'));return;}
   for(const c of clips){
     const row=makeButton('','item',()=>{
@@ -559,6 +574,7 @@ function renderMarkers() {
   for(const a of p.annotations)append(a.start,'#b7ff75');
   for(const f of p.freezes)append(f.at,'#ffbf7f');
   for(const c of p.clips)append(c.start,'#7cb9fb');
+  for(const z of p.zooms||[])append(z.at,'#ca9cff');
 }
 function updateCounts(){
   const count=state.project?.annotations.length||0;
@@ -566,7 +582,7 @@ function updateCounts(){
 }
 function renderEverything(){
   renderPalette();renderOverlay();renderMarkupList();renderProperties();
-  renderFreezeList();renderClipList();renderMarkers();updateCounts();updatePlayButton();
+  renderFreezeList();renderClipList();renderMarkers();updateCounts();updatePlayButton();director?.render();
 }
 function tab(which) {
   show('markups-pane',which==='markups');show('clips-pane',which==='clips');
@@ -594,7 +610,7 @@ async function importBackup(file) {
     p.duration=clamp(Number(original.duration),1,86400);
     p.mediaKind='demo';p.mediaName='';p.videoUrl=null;
     if(typeof original.sourceLink==='string'){
-      try{const u=new URL(original.sourceLink);if(u.protocol==='https:' && u.hostname==='app.veo.co')p.sourceLink=u.toString();}catch{}
+      try{const u=new URL(original.sourceLink);if(u.protocol==='https:' && (u.hostname==='veo.co'||u.hostname.endsWith('.veo.co')))p.sourceLink=u.toString();}catch{}
     }
     const nums=(a)=>[a.x,a.y,a.x2??a.x,a.y2??a.y,a.start,a.end,a.weight].every(Number.isFinite);
     p.annotations=original.annotations.filter(a=>a&&ICONS[a.type]&&nums(a)).map(a=>({
@@ -602,9 +618,12 @@ async function importBackup(file) {
       x2:clamp(a.x2??a.x,0,1),y2:clamp(a.y2??a.y,0,1),
       points:(Array.isArray(a.points)?a.points:[]).filter(q=>q&&Number.isFinite(q.x)&&Number.isFinite(q.y)).slice(0,1500).map(q=>({x:clamp(q.x,0,1),y:clamp(q.y,0,1)})),
       color:COLORS.includes(a.color)?a.color:COLORS[0],weight:clamp(a.weight,1,12),
-      label:String(a.label||'').slice(0,120),start:clamp(a.start,0,p.duration),end:clamp(a.end,0,p.duration),fade:clamp(a.fade,0,1.5)
+      label:String(a.label||'').slice(0,120),start:clamp(a.start,0,p.duration),end:clamp(a.end,0,p.duration),fade:clamp(a.fade,0,1.5),appearance:a.appearance==='pop'?'pop':'fade'
     })).filter(a=>a.end>=a.start);
     p.freezes=original.freezes.filter(f=>f&&Number.isFinite(f.at)&&Number.isFinite(f.hold)).map(f=>({id:uid(),at:clamp(f.at,0,p.duration),hold:clamp(f.hold,.5,20)}));
+    p.zooms=(Array.isArray(original.zooms)?original.zooms:[]).slice(0,500)
+      .filter(z=>z&&[z.x,z.y,z.at,z.hold,z.scale].every(Number.isFinite))
+      .map(z=>({id:uid(),x:clamp(z.x,0,1),y:clamp(z.y,0,1),at:clamp(z.at,0,p.duration),hold:clamp(z.hold,.5,20),scale:clamp(z.scale,1,3)}));
     p.clips=original.clips.filter(c=>c&&Number.isFinite(c.start)&&Number.isFinite(c.end)).map(c=>({id:uid(),start:clamp(c.start,0,p.duration),end:clamp(c.end,0,p.duration),title:String(c.title||'Clip').slice(0,100)})).filter(c=>c.end>c.start);
     state.projects.unshift(p);await persist(copy(p));await selectProject(p.id);toast('Backup restored. Reattach the video file to continue.');
   }catch(err){toast('Cannot restore backup: '+err.message,true);}
@@ -619,7 +638,7 @@ function bindUI() {
     e.target.value='';
   });
   $('reconnect').addEventListener('click',()=>{void reconnectVideo();});
-  $('source-link').addEventListener('click',attachLink);
+  $('source-link').addEventListener('click',()=>director?.openVeoDialog());
   $('open-source').addEventListener('click',()=>{
     const url=state.project?.sourceLink;if(url)window.open(url,'_blank','noopener,noreferrer');
   });
@@ -674,7 +693,7 @@ function bindUI() {
       e.preventDefault();if(e.shiftKey)redoAction();else undoAction();return;
     }
     if(editing||e.ctrlKey||e.metaKey||e.altKey)return;
-    const keys={v:'select','1':'ring',a:'arrow',l:'line',b:'rect',c:'ellipse',p:'pen',t:'text',s:'spotlight'};
+    const keys={v:'select','1':'ring',a:'arrow',l:'line',b:'rect',c:'ellipse',p:'pen',t:'text',s:'spotlight',z:'zoom'};
     if(e.key===' '){e.preventDefault();togglePlayback();}
     else if(keys[e.key.toLowerCase()])setTool(keys[e.key.toLowerCase()]);
     else if(e.key==='Delete'||e.key==='Backspace')removeMarkup();
@@ -688,7 +707,14 @@ async function bootstrap() {
   try {state.db=await openDB();}
   catch(err){console.warn('IndexedDB unavailable, using local storage',err);toast('Limited storage mode. Download backups regularly.',true);}
   state.projects=(await loadAll()).filter(p=>p&&p.id&&Array.isArray(p.annotations)&&Array.isArray(p.freezes)&&Array.isArray(p.clips));
-  bindUI();setTool('select');tab('markups');
+  bindUI();
+  director=installDirector({
+    state,video,getTime:playhead,getDuration:duration,pause:pausePlayback,seek:seekTo,
+    save:queueSave,renderOverlay,renderMarkers,renderSource,renderProjects,pickVideo,
+    setVideoSource,pushUndo,notify:toast
+  });
+  director.bind();
+  setTool('select');tab('markups');
   if(!state.projects.length){
     const p=projectFactory();state.projects.push(p);await persist(copy(p));
   }
