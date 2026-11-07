@@ -76,7 +76,7 @@ async function localRequest(url,init={}){
     }
     if(suffix==='/veo-import'&&method==='GET')return json({status:'idle'});
     if(suffix==='/veo-stream' || suffix==='/veo-import')
-      return error('Instant Veo playback requires the connected streaming service. Use the “Connect Veo streaming” control above the editor; the original video service is included in this project.',503);
+      return error('Veo playback is not available on GitHub Pages. The separate streaming service has not been deployed or connected yet; there is no service URL to paste.',503);
     if(suffix==='/exports')
       return error('MP4 export needs the connected video service. The original FFmpeg exporter is preserved in the hosted editor.',503);
   }
@@ -146,17 +146,10 @@ function createControls(){
   const actions=document.querySelector('.top-actions');
   if(!actions)return;
   const host=document.createElement('button');host.id='hosted-veo-control';host.className='btn btn-outline';
-  host.textContent='◎ Connect Veo streaming';host.title='Open the full editor with real on-demand Veo streaming';
+  host.textContent='◎ Veo streaming: not connected';
+  host.title='A separate video service must be deployed before public Veo links can play here';
   host.addEventListener('click',()=>{
-    const last=localStorage.getItem('touchline-classic-service')||'';
-    const raw=prompt('Paste the HTTPS address of your Touchline Studio video service. This opens the original full editor, including instant Veo streaming and MP4 export.',last);
-    if(raw===null)return;
-    try{
-      const url=new URL(raw.trim());
-      if(url.protocol!=='https:' ||url.username||url.password||url.pathname!=='/')throw Error();
-      localStorage.setItem('touchline-classic-service',url.origin+'/');
-      location.assign(url.origin+'/');
-    }catch{alert('Please enter the HTTPS root address for your Touchline Studio service (for example https://your-service.example/).');}
+    alert('Veo streaming is not connected yet. This is the GitHub Pages editor, which cannot run the video-streaming server. No video service has been deployed yet, so there is no address for you to enter. Your existing editor, projects and local footage are unaffected.');
   });
   const reconnect=document.createElement('button');reconnect.id='reconnect-match';reconnect.className='btn btn-outline';
   reconnect.textContent='↻ Reconnect footage';reconnect.title='Reopen a local match file while preserving your drawings';
@@ -166,7 +159,7 @@ function createControls(){
   const instructions=document.querySelector('.sidebar-bottom small');
   if(instructions)instructions.textContent='Saved in this browser · back up important work';
   const help=document.createElement('p');help.id='classic-browser-note';
-  help.textContent='Classic editor restored. Local footage plays on this page. For Veo “Stream instantly” and server MP4 exporting, connect the companion video service once; GitHub Pages cannot run a video proxy.';
+  help.textContent='Local match files work in this classic editor. Public Veo links cannot stream until a separate video server is deployed and verified. There is no service address to enter yet; server MP4 export is also unavailable here.';
   const heading=document.querySelector('.project-heading');
   if(heading)heading.insertAdjacentElement('afterend',help);
 }
