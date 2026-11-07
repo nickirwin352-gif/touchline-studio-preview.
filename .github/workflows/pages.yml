@@ -53,6 +53,23 @@ jobs:
           node --check _site/classic/assets/app.js
           node --check _site/classic/bridge.js
           node --check hosted/web/free-persistence.js
+      - name: Verify hosted editor link in the site launcher
+        run: |
+          grep -q 'https://touchline-veo-free.onrender.com/' _site/index.html
+          grep -q 'href="./classic/"' _site/index.html
+      - name: Check Render service reachability without credentials
+        if: github.event_name != 'pull_request'
+        continue-on-error: true
+        run: |
+          status=$(curl --location --silent --show-error --max-time 110 --retry 2 --retry-delay 5 --retry-all-errors --output /dev/null --write-out '%{http_code}' 'https://touchline-veo-free.onrender.com/api/health' || true)
+          echo "Render unauthenticated health response: HTTP $status"
+          if [ "$status" = "401" ]; then
+            echo "Render service is reachable and correctly requests owner authentication."
+          elif [ "$status" = "200" ]; then
+            echo "::warning::Render health endpoint responds without authentication; verify password protection."
+          else
+            echo "::warning::Render service was not confirmed online (HTTP $status). Check your Render deployment dashboard."
+          fi
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5

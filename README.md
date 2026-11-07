@@ -1,6 +1,8 @@
 # Touchline Studio — Classic Football Analysis
 
-**Existing GitHub editor:** https://nickirwin352-gif.github.io/touchline-studio-preview./
+**Your normal editor bookmark:** https://nickirwin352-gif.github.io/touchline-studio-preview./ — now opens your personal Render video service at https://touchline-veo-free.onrender.com/.
+
+**Local-only Classic fallback:** https://nickirwin352-gif.github.io/touchline-studio-preview./classic/
 
 The original-style Touchline Studio interface has manual player rings, arrows, labels, tactical annotation timing, zoom, freezes, clips and playlists. The source and GitHub Pages website are public, but never commit match footage, project data or credentials.
 
@@ -22,7 +24,7 @@ Render's Free plan is intended for personal experiments, not reliable all-day pr
 - Public Veo streams may use significant network bandwidth, CPU and outbound requests. The free service may be slowed or suspended if limits are reached. If your workspace has a payment method, check Render's usage and spending controls to avoid unexpected overage charges.
 - The public Veo extractor may stop working if Veo updates access or video delivery. Public sharing is *view-only*; analyse and export recordings only with appropriate permission.
 
-**No Render instance is deployed simply by committing this repository.** You must explicitly create it in your own Render workspace. The GitHub Pages site remains available unchanged until you choose to connect a successful backend.
+The Render host URL provided by the owner is now linked from the normal GitHub Pages bookmark. The root GitHub page redirects to https://touchline-veo-free.onrender.com/; /classic/ remains available for local-only editing if the free service is asleep or unavailable. **This URL connection does not itself prove the Render deployment is healthy or real Veo playback works.** The Render deployment must show Live, and authentication plus an actual publicly accessible Veo recording still need testing.
 
 ### Retaining the paid option
 

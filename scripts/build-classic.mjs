@@ -48,6 +48,7 @@ app=app.slice(0,start)+
   "        el('progress-bar').style.width='100%';"+
   app.slice(finish);
 await writeFile(join(out,'classic/assets/app.js'),app);
-const redirect='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="refresh" content="1;url=./classic/"><title>Touchline Studio — Classic Football Analysis</title><style>body{margin:0;min-height:100vh;background:#0c121b;color:#ecf5ef;font:16px system-ui;display:grid;place-content:center;text-align:center}a{color:#b7ff75}small{color:#a7bac5}</style></head><body><div><h1>Touchline Studio</h1><p>Opening your original analysis editor…</p><a href="./classic/">Open Classic Editor</a><p><small>Veo streaming is available in the connected video service.</small></p></div><script>try{const u=localStorage.getItem("touchline-classic-service");if(u){const v=new URL(u);if(v.protocol==="https:"&&v.pathname==="/")location.replace(v.toString());else location.replace("./classic/")}else location.replace("./classic/")}catch{location.replace("./classic/")}</script></body></html>';
-await writeFile(join(out,'index.html'),redirect);
+// Route the user's familiar GitHub bookmark to their hosted full Veo editor.
+// Preserve /classic/ as the local-only fallback and /lite/ as the older prototype.
+await cp('scripts/launcher.html', join(out, 'index.html'));
 console.log('Classic browser editor assembled with original design and local data bridge.');
