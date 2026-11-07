@@ -3,6 +3,9 @@ import { join } from 'node:path';
 const out='_site';
 await mkdir(out,{recursive:true});
 await mkdir(join(out,'lite'),{recursive:true});
+await mkdir(join(out,'veo-check'),{recursive:true});
+await cp('scripts/veo-embed-check.html',join(out,'veo-check','index.html'));
+
 await cp('hosted/web',join(out,'classic'),{recursive:true});
 await cp('scripts/classic-bridge.js',join(out,'classic/bridge.js'));
 for(const file of ['index.html','app.js','director.js','recorder.js','styles.css'])
