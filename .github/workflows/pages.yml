@@ -52,6 +52,7 @@ jobs:
         run: |
           node --check _site/classic/assets/app.js
           node --check _site/classic/bridge.js
+          node --check hosted/web/free-persistence.js
       - name: Configure GitHub Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5

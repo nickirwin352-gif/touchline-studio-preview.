@@ -10,6 +10,7 @@ import { beginVeoImport, getImportStatus, cancelVeoImport, requireIdle } from '.
 import { activateVeoStream, deactivateVeoStream, requestVideoRange, clearResolvedStream, inspectPublicVeoLink } from './veo-stream.mjs';
 import { startExport, getExportJob, cancelExport, downloadExport, hasActiveExport, discardExportsForProject } from './export.mjs';
 import { startAiJob, getAiJob, cancelAiJob, cancelAiForProject, hasActiveAiJob } from './ai-tracking.mjs';
+import { freeModeEnabled, restoreFreeSnapshots } from './free-persistence.mjs';
 
 const WEB_ROOT = resolve(fileURLToPath(new URL('../web/', import.meta.url)));
 const types = new Map([['.html', 'text/html; charset=utf-8'], ['.css', 'text/css; charset=utf-8'], ['.js', 'text/javascript; charset=utf-8'], ['.svg', 'image/svg+xml'], ['.ico', 'image/x-icon']]);
@@ -53,7 +54,19 @@ export async function handler(req, res) {
     if (requireCloudAccess(req, res)) return;
     const url = new URL(req.url, 'http://127.0.0.1');
     const path = url.pathname;
-    if (path === '/api/health' && req.method === 'GET') return json(res, 200, { status: 'ok', app: 'Touchline Studio', version: '1.1.0' });
+    if (path === '/api/health' && req.method === 'GET') return json(res, 200, {
+      status: 'ok', app: 'Touchline Studio', version: '1.1.0',
+      hostingMode: freeModeEnabled() ? 'free' : 'persistent',
+      persistentServerStorage: !freeModeEnabled()
+    });
+    if (path === '/api/free/status' && req.method === 'GET') {
+      return json(res, 200, { enabled: freeModeEnabled(), browserBackupRequired: freeModeEnabled() });
+    }
+    if (path === '/api/free/restore' && req.method === 'POST' && freeModeEnabled()) {
+      const data = await readJson(req);
+      if (!Array.isArray(data?.projects)) return json(res, 400, { error: 'Expected project backups' });
+      return json(res, 200, await restoreFreeSnapshots(data.projects));
+    }
     if (path === '/api/projects') {
       if (req.method === 'GET') return json(res, 200, await listProjects());
       if (req.method === 'POST') {

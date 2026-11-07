@@ -18,17 +18,17 @@ The match must be accessible with proper permission, the extractor must resolve 
 
 ## One-time full video service activation
 
-render.yaml describes a Docker service using a paid Starter plan and persistent disk. Review any charges before approving.
+render.yaml now describes a FREE Docker web service with no persistent disk for personal Veo testing. The original paid Starter and persistent-disk configuration is preserved as render-paid.yaml. On the free service, project metadata is backed up in the same browser's IndexedDB and restored on cold starts, but source video files and generated exports remain temporary. This backup is experimental and must not be your only archive.
 
 1. In the hosting provider, select the public repository nickirwin352-gif/touchline-studio-preview. and choose the supplied Blueprint.
-2. Review the paid Starter plan and persistent-disk charges. Set TOUCHLINE_ACCESS_PASSWORD to a random secret of at least 20 characters directly in the host dashboard; do not paste it into chat or commit it.
+2. Confirm Render lists a Free ($0) web service with no disk or other paid resources. Set TOUCHLINE_ACCESS_PASSWORD to a random secret of at least 20 characters directly in the host dashboard; do not paste it into chat or commit it.
 3. After the service deployment succeeds, open its HTTPS root and log in with username touchline and the private password. This is the actual same-origin editor with Veo Stream instantly and FFmpeg MP4 exporting.
 4. In the GitHub Pages edition, click Connect Veo streaming and paste the full service HTTPS root. The GitHub Pages launcher remembers that URL and sends you straight to the full editor whenever you use your GitHub bookmark.
 
-The server container automatically installs FFmpeg and the small yt-dlp utility. You do not need to install Python, FFmpeg or AI models on your laptop. Once the backend has been linked, commits to the public repo and hosting auto-deploy provide the edit-refresh workflow.
+The server container automatically installs FFmpeg and the small yt-dlp utility. You do not need to install Python, FFmpeg or AI models on your laptop. Once the backend has been linked, commits to the public repo and hosting auto-deploy provide the edit-refresh workflow. Render Free sleeps after 15 idle minutes and may take about one minute to resume; heavy video traffic can reach plan limits.
 
 ## Privacy
 
-GitHub Pages and this repository are public. Never commit videos, private match URLs, credentials, project JSON or signed URLs to the repository. The hosted editor requires its single-owner password and mounted storage disk; arrange backups of that disk. Local browser data is specific to one browser and can be cleared by the browser.
+GitHub Pages and this repository are public. Never commit videos, private match URLs, credentials, project JSON or signed URLs to the repository. The hosted editor requires its single-owner password. Free hosting has NO persistent disk; project metadata is backed up to this browser only, and uploaded video files disappear on restarts or sleep. Local browser data is specific to one browser and can be cleared by the browser.
 
 There is currently no connected live backend, so the GitHub Pages copy cannot truthfully claim that Veo streaming or server-side exports work yet.
