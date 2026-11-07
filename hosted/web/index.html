@@ -26,7 +26,7 @@
 
       <div class="workspace">
         <main class="main-content">
-          <div class="project-heading"><div><div class="eyebrow">ANALYSIS WORKSPACE <span class="stage-chip">PLAYER TRACKING · v1.1</span></div><input id="project-title" aria-label="Project title" maxlength="100" placeholder="Untitled analysis" /><div id="video-description" class="project-subtitle">Add match footage to start your analysis</div></div><div class="heading-note"><span class="heading-note-dot"></span> MANUAL ANALYSIS</div></div>
+          <div class="project-heading"><div><div class="eyebrow">ANALYSIS WORKSPACE <span class="stage-chip">COACHING EDITOR · CLASSIC</span></div><input id="project-title" aria-label="Project title" maxlength="100" placeholder="Untitled analysis" /><div id="video-description" class="project-subtitle">Add match footage to start your analysis</div></div><div class="heading-note"><span class="heading-note-dot"></span> MANUAL ANALYSIS</div></div>
 
           <div id="source-strip" class="source-strip" hidden>
             <div class="source-strip-info"><strong id="source-title">Linked match</strong><small id="source-message"></small></div>
@@ -55,7 +55,7 @@
               <div class="toolbar-spacer"></div>
               <div id="color-tools" class="color-tools" aria-label="Annotation colours"></div>
             </div>
-            <div id="ai-control-strip" class="ai-control-strip"><div><strong>AI PLAYER FOLLOWING</strong><small id="ai-status">Pause footage, choose Detect players, then select a player box. Optional Python model setup required.</small></div><label>Track <select id="ai-seconds" class="field" aria-label="Tracking duration"><option value="6">6 sec</option><option value="10" selected>10 sec</option><option value="15">15 sec</option></select></label><button id="ai-cancel" type="button" class="btn btn-outline" hidden>Cancel</button><button id="ai-clear" type="button" class="btn btn-outline" hidden>Clear boxes</button></div>
+            <div id="ai-control-strip" class="ai-control-strip"><div><strong>MANUAL ANALYSIS</strong><small id="ai-status">Pause footage, choose Detect players, then select a player box. Optional Python model setup required.</small></div><label>Track <select id="ai-seconds" class="field" aria-label="Tracking duration"><option value="6">6 sec</option><option value="10" selected>10 sec</option><option value="15">15 sec</option></select></label><button id="ai-cancel" type="button" class="btn btn-outline" hidden>Cancel</button><button id="ai-clear" type="button" class="btn btn-outline" hidden>Clear boxes</button></div>
             <div class="video-outer"><div id="video-frame" class="video-frame">
               <div id="video-visual" class="video-visual"><video id="match-video" preload="metadata" playsinline></video>
               <svg id="drawing-overlay" class="drawing-overlay" aria-label="Tactical drawing layer"></svg><svg id="ai-detections" class="ai-detections" aria-label="Detected players to select" hidden></svg></div><div id="freeze-indicator" class="freeze-indicator" hidden>❚❚ FREEZE FRAME <small id="freeze-counter"></small></div>

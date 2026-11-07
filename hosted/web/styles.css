@@ -166,3 +166,6 @@
 .ai-detection-target{pointer-events:all;cursor:pointer;filter:drop-shadow(0 0 2px #000)}
 .ai-detection-target:hover rect{stroke:#fff;stroke-width:4}
 #ai-detect{font-size:11px;white-space:nowrap}
+
+/* Classic coaching edition: AI model setup is intentionally not part of the workflow. */
+#ai-detect,#ai-control-strip{display:none!important}
